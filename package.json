@@ -11,6 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
+    "build:offline": "tsc --noEmit && node scripts/build-offline.mjs",
+    "check:offline": "node scripts/check-offline.mjs",
     "validate:schools": "node scripts/validate-schools.mjs"
   },
   "devDependencies": {
