@@ -1,16 +1,6 @@
 import { parseReferenceList } from './references/parse'
-import { type VerifyResult, type VerifyStatus, verifyAll } from './references/verify'
-
-const STATUS_LABEL: Record<VerifyStatus, string> = {
-  verified: '已核实',
-  mismatch: '信息不符',
-  not_found: '查无此文',
-  manual: '需人工核对',
-  error: '查询失败',
-}
-
-/** 排序：最需要学生处理的排在前面 */
-const STATUS_ORDER: VerifyStatus[] = ['not_found', 'mismatch', 'error', 'manual', 'verified']
+import { STATUS_LABEL, STATUS_ORDER, countByStatus, toCsv, toTextReport } from './references/report'
+import { type VerifyResult, verifyAll } from './references/verify'
 
 const SAMPLE = `[1] LECUN Y, BENGIO Y, HINTON G. Deep learning[J]. Nature, 2015, 521(7553): 436-444. DOI:10.1038/nature14539.
 [2] VASWANI A, SHAZEER N, PARMAR N, et al. Attention is all you need[C]//Advances in Neural Information Processing Systems. 2017: 5998-6008.
@@ -23,8 +13,13 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const input = $<HTMLTextAreaElement>('refs')
 const runBtn = $<HTMLButtonElement>('run')
 const progress = $<HTMLSpanElement>('progress')
+const report = $<HTMLElement>('report')
+const reportMeta = $<HTMLElement>('report-meta')
+const bar = $<HTMLElement>('bar')
 const summary = $<HTMLElement>('summary')
 const resultsEl = $<HTMLElement>('results')
+
+let last: { results: VerifyResult[]; at: Date } | null = null
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, props: Partial<HTMLElementTagNameMap[K]> = {}, ...children: (Node | string)[]) {
   const node = Object.assign(document.createElement(tag), props)
@@ -33,12 +28,8 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, props: Partial<HTMLEl
 }
 
 function renderCard(r: VerifyResult): HTMLElement {
-  const head = el('div', { className: 'result-head' },
-    el('span', { className: `tag ${r.status}` }, STATUS_LABEL[r.status]),
-    el('span', { className: 'idx' }, `[${r.ref.index}]`),
-  )
   const body = el('div', { className: 'result-body' },
-    el('p', { className: 'raw' }, r.ref.raw),
+    el('p', { className: 'raw' }, el('span', { className: 'idx' }, `[${r.ref.index}] `), r.ref.raw),
     el('p', { className: 'reason' }, r.reason),
   )
   if (r.match && r.status !== 'verified') {
@@ -47,17 +38,29 @@ function renderCard(r: VerifyResult): HTMLElement {
   const links = el('p', { className: 'links' })
   for (const l of r.links) links.append(el('a', { href: l.url, target: '_blank', rel: 'noopener' }, l.label))
   body.append(links)
-  return el('article', { className: `result ${r.status}` }, head, body)
+  return el('article', { className: `result ${r.status}` },
+    el('span', { className: `tag ${r.status}` }, STATUS_LABEL[r.status]),
+    body,
+  )
 }
 
-function renderSummary(results: VerifyResult[]) {
-  const counts = new Map<VerifyStatus, number>()
-  for (const r of results) counts.set(r.status, (counts.get(r.status) ?? 0) + 1)
-  summary.replaceChildren(
-    el('p', {}, `共 ${results.length} 条：`),
-    ...STATUS_ORDER.filter((s) => counts.get(s)).map((s) => el('span', { className: `tag ${s}` }, `${STATUS_LABEL[s]} ${counts.get(s)}`)),
+function renderReport(results: VerifyResult[], at: Date) {
+  const counts = countByStatus(results)
+  const present = STATUS_ORDER.filter((s) => counts.get(s))
+
+  reportMeta.textContent = `${at.toLocaleString('zh-CN', { hour12: false })} · 共 ${results.length} 条`
+  bar.replaceChildren(...present.map((s) => {
+    const seg = el('span', { className: `seg ${s}` })
+    seg.style.flexGrow = String(counts.get(s))
+    return seg
+  }))
+  summary.replaceChildren(...present.map((s) => el('span', { className: `tag ${s}` }, `${STATUS_LABEL[s]} ${counts.get(s)}`)))
+
+  const sorted = [...results].sort(
+    (a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) || a.ref.index - b.ref.index,
   )
-  summary.hidden = false
+  resultsEl.replaceChildren(...sorted.map(renderCard))
+  report.hidden = false
 }
 
 async function run() {
@@ -67,21 +70,29 @@ async function run() {
     return
   }
   runBtn.disabled = true
-  resultsEl.replaceChildren()
-  summary.hidden = true
   progress.textContent = `正在核验 0 / ${refs.length}…`
 
   const results = await verifyAll(refs, {
     onProgress: (done) => (progress.textContent = `正在核验 ${done} / ${refs.length}…`),
   })
-
-  const sorted = [...results].sort(
-    (a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) || a.ref.index - b.ref.index,
-  )
-  renderSummary(results)
-  resultsEl.replaceChildren(...sorted.map(renderCard))
-  progress.textContent = '核验完成。'
+  last = { results, at: new Date() }
+  renderReport(results, last.at)
+  progress.textContent = '核验完成，报告在下方。'
   runBtn.disabled = false
+  report.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function download(name: string, content: string, type: string) {
+  const url = URL.createObjectURL(new Blob([content], { type }))
+  const a = el('a', { href: url, download: name })
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+function flash(btn: HTMLButtonElement, text: string) {
+  const old = btn.textContent
+  btn.textContent = text
+  setTimeout(() => (btn.textContent = old), 1500)
 }
 
 runBtn.addEventListener('click', () => void run())
@@ -89,3 +100,16 @@ $<HTMLButtonElement>('sample').addEventListener('click', () => {
   input.value = SAMPLE
   input.focus()
 })
+$<HTMLButtonElement>('copy').addEventListener('click', async (e) => {
+  if (!last) return
+  try {
+    await navigator.clipboard.writeText(toTextReport(last.results, last.at))
+    flash(e.currentTarget as HTMLButtonElement, '已复制')
+  } catch {
+    flash(e.currentTarget as HTMLButtonElement, '复制失败，请改用下载')
+  }
+})
+$<HTMLButtonElement>('csv').addEventListener('click', () => {
+  if (last) download(`参考文献核验-${last.at.toISOString().slice(0, 10)}.csv`, toCsv(last.results), 'text/csv;charset=utf-8')
+})
+$<HTMLButtonElement>('print').addEventListener('click', () => window.print())

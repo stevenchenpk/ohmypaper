@@ -3,60 +3,123 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="毕业论文提交前体检：免费、开源、不上传论文。核验参考文献是否真实存在。" />
+    <meta name="description" content="毕业论文提交前体检：免费、开源、论文不上传。核验参考文献是否真实存在，检查格式，生成 AI 使用声明。" />
+    <meta name="theme-color" content="#1F4D3F" />
     <title>ohmypaper · 论文提交前体检</title>
+    <link rel="icon" href="./logo.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/src/ui/style.css" />
   </head>
   <body>
-    <header class="site">
-      <div class="wrap">
-        <h1>ohmypaper <span>论文提交前体检</span></h1>
-        <p class="tagline">不替你写，帮你明明白白地过关。</p>
+    <header class="topbar">
+      <div class="wrap topbar-inner">
+        <a class="brand" href="./">
+          <img src="./logo.svg" alt="" width="32" height="32" />
+          <span class="brand-name">ohmypaper</span>
+          <span class="brand-sub">论文体检</span>
+        </a>
+        <nav>
+          <a href="#faq">常见问题</a>
+          <a href="https://github.com/stevenchenpk/ohmypaper" target="_blank" rel="noopener">GitHub</a>
+        </nav>
       </div>
     </header>
 
-    <main class="wrap">
-      <section class="card">
-        <h2>参考文献核验</h2>
-        <p class="hint">
-          把论文的参考文献列表整段粘贴进来，每条一行（带不带 [1] 序号都可以）。
-          我们会逐条到 <a href="https://www.crossref.org/" target="_blank" rel="noopener">Crossref</a> 和
-          <a href="https://openalex.org/" target="_blank" rel="noopener">OpenAlex</a> 两个公开学术库核对，
-          找出 AI 编造或写错的文献。
-        </p>
-        <textarea id="refs" rows="12" spellcheck="false" placeholder="[1] LECUN Y, BENGIO Y, HINTON G. Deep learning[J]. Nature, 2015, 521(7553): 436-444. DOI:10.1038/nature14539.
-[2] 张三, 李四. 生成式人工智能对高等教育的影响研究[J]. 中国高教研究, 2024(3): 12-19."></textarea>
-        <div class="actions">
-          <button id="run" type="button">开始核验</button>
-          <button id="sample" type="button" class="ghost">填入示例</button>
-          <span id="progress" class="progress" aria-live="polite"></span>
-        </div>
-        <p class="privacy">
-          🔒 隐私：整个过程在你的浏览器里完成，论文不会上传到任何服务器。
-          发往公开学术库的只有单条文献的标题或 DOI。
-        </p>
+    <main>
+      <section class="hero wrap">
+        <h1>提交之前，<br class="m" />先给论文做个体检。</h1>
+        <p class="lede">查文献真伪、查格式规范、写 AI 使用声明。不替你写，帮你明明白白地过关。</p>
+        <ul class="promises">
+          <li>免费开源</li>
+          <li>论文不上传</li>
+          <li>不降重，不代写</li>
+        </ul>
       </section>
 
-      <section id="summary" class="summary" hidden></section>
-      <section id="results" class="results"></section>
+      <section class="wrap">
+        <div class="tool">
+          <div class="tabs" role="tablist">
+            <button class="tab active" role="tab" aria-selected="true">参考文献核验</button>
+            <button class="tab" role="tab" aria-selected="false" disabled>格式体检<small>即将上线</small></button>
+            <button class="tab" role="tab" aria-selected="false" disabled>AI 使用声明<small>即将上线</small></button>
+          </div>
 
-      <section class="card legend">
+          <div class="panel">
+            <label for="refs" class="panel-title">粘贴你的参考文献列表</label>
+            <p class="hint">
+              每条一行，带不带 [1] 序号都可以，支持 GB/T 7714 和 APA 格式。我们会逐条到
+              <a href="https://www.crossref.org/" target="_blank" rel="noopener">Crossref</a> 和
+              <a href="https://openalex.org/" target="_blank" rel="noopener">OpenAlex</a>
+              两个公开学术库核对，找出 AI 编造或写错的文献。
+            </p>
+            <textarea id="refs" rows="10" spellcheck="false" placeholder="[1] LECUN Y, BENGIO Y, HINTON G. Deep learning[J]. Nature, 2015, 521(7553): 436-444. DOI:10.1038/nature14539.
+[2] 张三, 李四. 生成式人工智能对高等教育的影响研究[J]. 中国高教研究, 2024(3): 12-19."></textarea>
+            <div class="actions">
+              <button id="run" type="button" class="primary">开始核验</button>
+              <button id="sample" type="button" class="link">填入示例</button>
+              <span id="progress" class="progress" aria-live="polite"></span>
+            </div>
+            <p class="privacy">
+              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 7V5a4 4 0 1 1 8 0v2h.5A1.5 1.5 0 0 1 14 8.5v5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5v-5A1.5 1.5 0 0 1 3.5 7H4zm1.5 0h5V5a2.5 2.5 0 0 0-5 0v2z" fill="currentColor"/></svg>
+              全程在你的浏览器里完成，论文不会上传。发往学术库的只有单条文献的文本或 DOI。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="report" class="wrap report" hidden>
+        <div class="report-head">
+          <div>
+            <h2>体检报告</h2>
+            <p id="report-meta" class="hint"></p>
+          </div>
+          <div class="export">
+            <button id="copy" type="button" class="secondary">复制文字报告</button>
+            <button id="csv" type="button" class="secondary">下载 CSV</button>
+            <button id="print" type="button" class="secondary">打印 / 存为 PDF</button>
+          </div>
+        </div>
+        <div id="bar" class="bar" aria-hidden="true"></div>
+        <div id="summary" class="summary"></div>
+        <div id="results" class="results"></div>
+      </section>
+
+      <section class="wrap explain">
         <h2>结果怎么看</h2>
-        <ul>
-          <li><b class="tag verified">已核实</b> 找到标题一致的记录。仍建议你读过原文再引用。</li>
-          <li><b class="tag mismatch">信息不符</b> 找到了相近记录，但标题、年份或 DOI 对不上，最常见于 AI 张冠李戴。</li>
-          <li><b class="tag not_found">查无此文</b> 两个库都找不到，或者 DOI 根本不存在。请务必核对，这是虚构文献的典型特征。</li>
-          <li><b class="tag manual">需人工核对</b> 中文文献没有开放的核验接口，我们给出知网、百度学术、万方的检索链接，请自己点开确认。</li>
-        </ul>
-        <p class="hint">"查无此文"不等于一定是假的：极新的文献、会议论文、书籍章节可能还没被收录。工具给出的是线索，判断要由你来做。</p>
+        <dl class="legend">
+          <div><dt><span class="tag not_found">查无此文</span></dt><dd>两个库都找不到，或者 DOI 根本不存在。这是 AI 编造文献的典型特征，请务必找到原文。</dd></div>
+          <div><dt><span class="tag mismatch">信息不符</span></dt><dd>找到了相近的记录，但标题、年份或 DOI 对不上。最常见于 AI 把真 DOI 安在假标题上。</dd></div>
+          <div><dt><span class="tag manual">需人工核对</span></dt><dd>中文文献没有开放的核验接口。点击链接到知网、百度学术或万方确认。</dd></div>
+          <div><dt><span class="tag verified">已核实</span></dt><dd>找到标题一致的记录。引用之前，仍然建议你读过原文。</dd></div>
+        </dl>
+      </section>
+
+      <section id="faq" class="wrap explain">
+        <h2>常见问题</h2>
+        <details>
+          <summary>"查无此文"是不是说明我学术不端？</summary>
+          <p>不是。它只说明这两个公开学术库里找不到这条记录。极新的论文、部分会议论文和书籍章节可能还没被收录。它是一条提醒：请找到原文确认，确认无误就可以放心引用。</p>
+        </details>
+        <details>
+          <summary>我的论文会被上传吗？</summary>
+          <p>不会。这个网页没有后端服务器，所有处理都在你的浏览器里完成。核验时只把单条参考文献发给 Crossref 和 OpenAlex 这两个公开学术数据库。</p>
+        </details>
+        <details>
+          <summary>为什么不做降重、降 AI 率？</summary>
+          <p>因为那是在帮你绕过检测，而不是让论文变好。《学位法》把代写、剽窃、伪造列为撤销学位的情形，越来越多的学校要求如实披露 AI 的使用。我们帮你核实、规范和披露，让你在任何检查面前都站得住。</p>
+        </details>
+        <details>
+          <summary>中文文献为什么不能自动核验？</summary>
+          <p>知网、万方、维普都没有向个人开放的查询接口，我们也不会去抓取需要授权的数据库。所以中文文献会给出检索链接，请你自己点开确认。</p>
+        </details>
+        <details>
+          <summary>我们学校的格式要求有吗？</summary>
+          <p>格式体检正在开发中。每所学校的规则都由同学们一起整理，欢迎在 <a href="https://github.com/stevenchenpk/ohmypaper/issues/new/choose" target="_blank" rel="noopener">GitHub</a> 上提交你们学校的规范文件。</p>
+        </details>
       </section>
     </main>
 
     <footer class="wrap site-footer">
-      <p>
-        ohmypaper 是免费开源的公益项目。我们<b>不做</b>降重、降 AI 率、代写或任何"包过"服务。
-        <a href="https://github.com/stevenchenpk/ohmypaper" target="_blank" rel="noopener">GitHub</a>
-      </p>
+      <p>ohmypaper 是免费开源的公益项目，代码采用 MIT 许可。核验结果仅供自查参考，最终以你核对原文为准。</p>
     </footer>
 
     <script type="module" src="/src/main.ts"></script>

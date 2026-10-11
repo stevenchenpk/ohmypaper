@@ -77,3 +77,27 @@ continues on the next line[J]. Journal, 2021.
     expect(refs[1].title).toBe('题目二')
   })
 })
+
+describe('APA 风格', () => {
+  it('解析作者、年份和题名', () => {
+    const r = parseReference(
+      'Braun, V., & Clarke, V. (2006). Using thematic analysis in psychology. Qualitative Research in Psychology, 3(2), 77–101. https://doi.org/10.1191/1478088706qp063oa',
+      1,
+    )
+    expect(r.style).toBe('apa')
+    expect(r.title).toBe('Using thematic analysis in psychology')
+    expect(r.year).toBe(2006)
+    expect(r.doi).toBe('10.1191/1478088706qp063oa')
+    expect(r.authors[0]).toContain('Braun')
+  })
+
+  it('题名以问号结尾', () => {
+    const r = parseReference('Smith, J. (2021). Is attention all we need? Journal of X, 1, 1–2.', 1)
+    expect(r.title).toBe('Is attention all we need?')
+  })
+
+  it('GB/T 7714 条目不会被当成 APA', () => {
+    const r = parseReference('LECUN Y. Deep learning[J]. Nature, 2015 (521): 1-2.', 1)
+    expect(r.style).toBe('gbt7714')
+  })
+})
