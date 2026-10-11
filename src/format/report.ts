@@ -14,11 +14,16 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   cleanup: '提交前清理',
 }
 
-export const SEVERITY_LABEL: Record<Severity, string> = {
-  // 三层措辞：与所选规则不符 / 检测到（问题或待核对项）/ 未检查，需人工确认（见 Report.skipped）
+// 三层措辞：与规则不符 / 检测到（问题或待核对项）/ 未检查，需人工确认（见 Report.skipped）
+const SEVERITY_TEXT: Record<Severity, string> = {
   error: '与所选规则不符',
   warning: '检测到问题',
   info: '检测到，请核对',
+}
+
+/** 没选学校时没有"所选规则"，只有通用要求（国标和排版惯例） */
+export function severityLabel(s: Severity, hasProfile: boolean): string {
+  return s === 'error' && !hasProfile ? '与通用要求不符' : SEVERITY_TEXT[s]
 }
 
 export interface Location {

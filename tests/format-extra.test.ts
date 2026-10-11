@@ -154,3 +154,12 @@ describe('无法判断的不能算通过', () => {
     expect(rule).toBeDefined()
   })
 })
+
+describe('结果措辞', () => {
+  it('没选学校时写"与通用要求不符"，选了学校写"与所选规则不符"', async () => {
+    const { severityLabel } = await import('../src/format/report')
+    expect(severityLabel('error', false)).toBe('与通用要求不符')
+    expect(severityLabel('error', true)).toBe('与所选规则不符')
+    expect(severityLabel('warning', false)).toBe('检测到问题')
+  })
+})
