@@ -23,7 +23,7 @@ from docx.shared import Cm, Pt
 OUT = Path(__file__).parent
 
 REFS = [
-    "LECUN Y, BENGIO Y, HINTON G. Deep learning[J]. Nature, 2015, 521(7553): 436-444.",
+    "LeCun Y, Bengio Y, Hinton G. Deep learning[J]. Nature, 2015, 521(7553): 436-444.",
     "张三, 李四. 生成式人工智能对高等教育的影响研究[J]. 中国高教研究, 2024(3): 12-19.",
     "王五. 某某问题研究[D]. 北京: 北京大学, 2020.",
     "教育部. 关于某事项的通知[EB/OL]. (2025-03-01)[2026-10-01]. http://www.moe.gov.cn/x.html.",

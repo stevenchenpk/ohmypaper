@@ -1,0 +1,145 @@
+import { readFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
+import { parse } from 'yaml'
+import { DocxError, parseDocx } from '../src/format/docx'
+import { checkDocx } from '../src/format/engine'
+import { cnToInt, headingNumber } from '../src/format/checks/headings'
+import { canonicalFont, describeSize, parseLineSpacing, parseSpacing, type SchoolProfile } from '../src/format/profile'
+
+const fixtures = join(__dirname, 'fixtures')
+const load = (name: string) => new Uint8Array(readFileSync(join(fixtures, name)))
+const profile = parse(readFileSync(join(fixtures, 'test-profile.yaml'), 'utf8')) as SchoolProfile
+
+const ids = (r: ReturnType<typeof checkDocx>) => r.issues.map((i) => i.id)
+const serious = (r: ReturnType<typeof checkDocx>) => r.issues.filter((i) => i.severity !== 'info')
+
+describe('格式体检：合格样例不误报', () => {
+  for (const file of ['good.docx', 'good-libreoffice.docx']) {
+    it(`${file} 按测试档案检查没有问题`, () => {
+      const r = checkDocx(load(file), profile)
+      expect(serious(r)).toEqual([])
+      expect(r.stats.references).toBe(4)
+      expect(r.stats.sections).toBe(3)
+      expect(r.passed.length).toBeGreaterThan(20)
+    })
+  }
+
+  it('不选学校时只做通用检查，同样没有问题', () => {
+    const r = checkDocx(load('good.docx'), null)
+    expect(serious(r)).toEqual([])
+    expect(r.skipped.map((s) => s.item)).toContain('页边距')
+  })
+
+  it('抽出参考文献原文供引用核验', () => {
+    const r = checkDocx(load('good.docx'), profile)
+    expect(r.references[0]).toMatch(/^LeCun Y, Bengio Y, Hinton G\. Deep learning\[J\]/)
+  })
+})
+
+describe('格式体检：错误样例全部检出', () => {
+  const r = checkDocx(load('bad.docx'), profile)
+  const found = ids(r)
+
+  it.each([
+    ['page-margins', '左边距 2.5 厘米'],
+    ['header-missing', '正文没有页眉'],
+    ['pagenum-body-missing', '正文没有页码'],
+    ['pagenum-no-section-break', '摘要目录和正文不分节'],
+    ['body-font-cn', '正文用了等线、楷体'],
+    ['body-font-en', '正文西文用了 Calibri'],
+    ['body-size', '正文五号字'],
+    ['body-line-spacing', '正文单倍行距'],
+    ['body-indent', '正文没有首行缩进'],
+    ['headings-pseudo', '"3.2 研究设计"没用标题样式'],
+    ['headings-skip-level', '一级标题下直接三级'],
+    ['headings-number-sequence', '第一章后面是第三章'],
+    ['refs-unnumbered', '第 2 条参考文献没有序号'],
+    ['refs-type-code-present', '缺文献类型标识'],
+    ['refs-url-needs-carrier', '网址没标 /OL'],
+    ['cite-out-of-range', '正文引用了 [6]'],
+    ['cite-uncited', '第 5 条没被引用'],
+    ['cleanup-broken-ref', '错误！未找到引用源'],
+    ['cleanup-author-metadata', '文档属性留有作者名'],
+  ])('%s：%s', (id) => {
+    expect(found).toContain(id)
+  })
+
+  it('问题按严重程度排序，位置不超过 5 个', () => {
+    const rank = { error: 0, warning: 1, info: 2 }
+    const order = r.issues.map((i) => rank[i.severity])
+    expect(order).toEqual([...order].sort())
+    for (const i of r.issues) expect(i.locations.length).toBeLessThanOrEqual(5)
+  })
+
+  it('字体问题给出实际值', () => {
+    const font = r.issues.find((i) => i.id === 'body-font-cn')!
+    expect(font.expected).toBe('宋体')
+    expect(font.actual).toContain('等线')
+    expect(font.actual).toContain('楷体')
+  })
+})
+
+describe('种子学校档案', () => {
+  const root = join(__dirname, '..', 'schools')
+  for (const dir of readdirSync(root).filter((d) => !d.startsWith('_') && !d.includes('.'))) {
+    for (const file of readdirSync(join(root, dir)).filter((f) => f.endsWith('.yaml'))) {
+      it(`${dir}/${file} 能驱动引擎`, () => {
+        const p = parse(readFileSync(join(root, dir, file), 'utf8')) as SchoolProfile
+        expect(() => checkDocx(load('good.docx'), p)).not.toThrow()
+      })
+    }
+  }
+})
+
+describe('docx 解析', () => {
+  it('非 docx 文件给出可读的错误', () => {
+    expect(() => parseDocx(new TextEncoder().encode('not a zip'))).toThrow(DocxError)
+  })
+
+  it('解析分节、页码格式和页脚页码域', () => {
+    const doc = parseDocx(load('good.docx'))
+    expect(doc.sections.map((s) => s.pageNumberFormat)).toEqual(['arabic', 'upper_roman', 'arabic'])
+    expect(doc.sections[2].pageNumberStart).toBe(1)
+    expect(doc.sections[2].footer?.hasPageField).toBe(true)
+    expect(doc.sections[2].footer?.pageFieldAlign).toBe('center')
+    expect(doc.sections[2].header?.text).toBe('某某大学本科毕业论文')
+  })
+
+  it('按样式继承解析字体：主题字体换成实际字体名', () => {
+    const doc = parseDocx(load('bad.docx'))
+    const heading = doc.paragraphs.find((p) => p.text === '第一章 绪论')!
+    expect(heading.headingLevel).toBe(1)
+    expect(heading.runs[0].fontCn).toBe('黑体')
+    expect(heading.runs[0].sizePt).toBe(16)
+    const body = doc.paragraphs.find((p) => p.text.startsWith('深度学习'))!
+    expect(body.runs[0].fontCn).toBe('等线')
+    expect(body.lineSpacing).toEqual({ kind: 'multiple', value: 1 })
+  })
+})
+
+describe('档案写法换算', () => {
+  it('行距', () => {
+    expect(parseLineSpacing('1.5 倍')).toEqual({ kind: 'multiple', value: 1.5 })
+    expect(parseLineSpacing('单倍')).toEqual({ kind: 'multiple', value: 1 })
+    expect(parseLineSpacing('固定值 20 磅')).toEqual({ kind: 'exact', pt: 20 })
+    expect(parseLineSpacing('最小值20磅')).toEqual({ kind: 'atLeast', pt: 20 })
+    expect(parseLineSpacing('20 磅')).toBeNull()
+  })
+  it('段前段后', () => {
+    expect(parseSpacing('0.5 行')).toEqual({ lines: 0.5 })
+    expect(parseSpacing('12磅')).toEqual({ pt: 12 })
+  })
+  it('字体别名和字号名', () => {
+    expect(canonicalFont('SimSun')).toBe('宋体')
+    expect(canonicalFont('楷体_GB2312')).toBe('楷体')
+    expect(describeSize(10.5)).toBe('五号（10.5 磅）')
+  })
+  it('标题编号', () => {
+    expect(cnToInt('十二')).toBe(12)
+    expect(cnToInt('二十')).toBe(20)
+    expect(headingNumber('第三章 研究方法')).toEqual([3])
+    expect(headingNumber('2.1.4 样本')).toEqual([2, 1, 4])
+    expect(headingNumber('2023年政策回顾')).toBeNull()
+  })
+})

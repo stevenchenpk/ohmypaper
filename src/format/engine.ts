@@ -9,7 +9,7 @@ import { profileLabel } from './profile'
 import type { Report, Severity } from './report'
 import { CheckContext } from './checks/context'
 import { checkCleanup } from './checks/cleanup'
-import { checkHeadings } from './checks/headings'
+import { checkHeadings, looksLikeHeading } from './checks/headings'
 import { checkPage } from './checks/page'
 import { checkReferences, referenceText } from './checks/references'
 import { checkTextStyle } from './checks/textStyle'
@@ -33,6 +33,7 @@ export function checkModel(doc: DocxModel, profile: SchoolProfile | null): Repor
         if (!t || p.headingLevel !== null || p.inTable || p.inToc) return false
         if (/caption|题注/i.test(p.styleName ?? '') || CAPTION_RE.test(t)) return false
         if (p.align === 'center' && t.length <= 40) return false
+        if (!p.numbered && looksLikeHeading(p)) return false // 另报"疑似标题"
         return true
       })
 

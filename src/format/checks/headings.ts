@@ -46,7 +46,7 @@ export function headingNumber(text: string): number[] | null {
   return null
 }
 
-function looksLikeHeading(p: Paragraph): boolean {
+export function looksLikeHeading(p: Paragraph): boolean {
   const t = p.text.trim()
   if (t.length === 0 || t.length > 40 || /[。；;，,：:]$/.test(t)) return false
   if (CHAPTER_RE.test(t) || /^\d+[.．]\d+([.．]\d+)*[\s　]*\S/.test(t)) {

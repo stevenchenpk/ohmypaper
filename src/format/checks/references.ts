@@ -1,28 +1,33 @@
 /**
- * 参考文献格式（GB/T 7714）和正文引用的对应关系。
- *
- * 目前按 GB/T 7714—2015 的条款实现，这些条款在 2025 版里是否有变化，
- * 等"规则与标准数据"整理出两版差异后再逐条核对；在那之前，依据里会写明"按 2015 版条款"。
+ * 参考文献：在 docx 里找到参考文献表，逐条跑 GB/T 7714 著录规则（规则本身在
+ * src/references/style/gbt7714.ts，区分 2015 和 2025 两版），再检查序号、重复、
+ * 条数，以及正文引用与文献表的对应关系。
  */
 
 import type { Paragraph } from '../docx'
 import { parseReference } from '../../references/parse'
+import { type Edition, RULES, checkEntry } from '../../references/style/gbt7714'
+import type { SchoolProfile } from '../profile'
 import { locate, norm } from '../structure'
 import type { CheckContext } from './context'
 import { checkTextStyle } from './textStyle'
 
-const TYPE_RE = /[[［]\s*(J|M|D|C|N|R|S|P|G|A|Z|DB|CP|EB|DS|CM|AO)\s*(\/\s*(OL|MT|DK|CD))?\s*[\]］]/
 const MANUAL_NO = /^\s*[[［]\s*(\d+)\s*[\]］]\s*/
 const DOTTED_NO = /^\s*(\d+)\s*[.．、]\s*/
-const URL_RE = /(https?:\/\/|www\.)\S+/i
-const ACCESS_DATE = /[[［]\s*\d{4}\s*-\s*\d{1,2}\s*-\s*\d{1,2}\s*[\]］]/
-const FULLWIDTH = /[，。：；（）]/
 /** 正文里的 [1]、[2-5]、[1,3]、［6］ */
 const CITE_RE = /[[［]\s*(\d{1,3}(?:\s*[-–—~～,，、]\s*\d{1,3})*)\s*[\]］]/g
 
-export function gbBasis(standard: string | null | undefined): string {
-  if (standard === 'GB/T 7714-2015') return 'GB/T 7714—2015'
-  return 'GB/T 7714—2025（目前按 2015 版条款检查，两版差异待核对）'
+/**
+ * 用哪一版国标：档案写明了就用档案的；没写时用现行的 2025 版
+ * （2026-07-01 实施，2027 届起的论文基本都在实施之后提交）。
+ */
+export function editionFor(profile: SchoolProfile | null): Edition {
+  return profile?.references?.standard === 'GB/T 7714-2015' ? '2015' : '2025'
+}
+
+function editionLabel(edition: Edition, profile: SchoolProfile | null): string {
+  const explicit = profile?.references?.standard
+  return `GB/T 7714—${edition}${explicit ? '' : '（学校档案未指定版本，按现行版检查）'}`
 }
 
 function expandCitation(s: string): number[] {
@@ -44,7 +49,8 @@ export function referenceText(p: Paragraph): string {
 export function checkReferences(ctx: CheckContext) {
   const { s, profile } = ctx
   const refRule = profile?.references
-  const basis = gbBasis(refRule?.standard)
+  const edition = editionFor(profile)
+  const basis = editionLabel(edition, profile)
   const style = refRule?.style ?? 'numeric'
 
   if (refRule?.standard === 'APA-7' || refRule?.standard === 'other') {
@@ -96,48 +102,53 @@ export function checkReferences(ctx: CheckContext) {
     if (!dotted.length && !missing.length && !seqBad.length) ctx.pass('references', '参考文献序号')
   }
 
-  // 逐条著录项目
-  const noType: Paragraph[] = [], noCarrier: Paragraph[] = [], noAccess: Paragraph[] = []
-  const noYear: Paragraph[] = [], fullwidth: Paragraph[] = [], tooManyAuthors: Paragraph[] = []
+  // 逐条著录规则（GB/T 7714 两版规则表）
+  const byRule = new Map<string, { paras: Paragraph[]; messages: string[]; severity: 'error' | 'warning' | 'info' }>()
+  entries.forEach((p, i) => {
+    for (const issue of checkEntry(referenceText(p), i + 1, { edition })) {
+      const g = byRule.get(issue.ruleId) ?? { paras: [], messages: [], severity: issue.severity }
+      g.paras.push(p)
+      g.messages.push(issue.message)
+      byRule.set(issue.ruleId, g)
+    }
+  })
+  for (const rule of RULES) {
+    if (!rule.severity[edition]) continue
+    const g = byRule.get(rule.id)
+    if (!g) {
+      ctx.pass('references', rule.title)
+      continue
+    }
+    const clause = rule.clause[edition]
+    ctx.addForParagraphs(g.paras, {
+      id: `refs-${rule.id}`, category: 'references', severity: g.severity,
+      title: `${rule.title}（${g.paras.length} 条）`,
+      detail: [...new Set(g.messages)].slice(0, 2).join(' ') + (rule.falsePositiveRisk !== 'low' && rule.falsePositiveNote ? ` 注意：${rule.falsePositiveNote}` : ''),
+      basis: `${basis}${clause ? ` ${clause}` : ''}`,
+    })
+  }
+
+  // 出版年、重复条目、外文条数
+  const noYear: Paragraph[] = []
   const seen = new Map<string, Paragraph>()
   const dups: Paragraph[] = []
   let foreign = 0
   for (const p of entries) {
-    const text = referenceText(p)
-    const parsed = parseReference(text, 0)
+    const parsed = parseReference(referenceText(p), 0)
     if (!parsed.isChinese) foreign++
-    const type = text.match(TYPE_RE)
-    if (!type) noType.push(p)
-    if (URL_RE.test(text)) {
-      if (type && !type[3]) noCarrier.push(p)
-      if (!ACCESS_DATE.test(text)) noAccess.push(p)
-    }
     if (parsed.year === null) noYear.push(p)
-    if (FULLWIDTH.test(text)) fullwidth.push(p)
-    if (parsed.authors.length > 3 && !/(等|et\s*al)/i.test(text.split(/[.．]/)[0])) tooManyAuthors.push(p)
     if (parsed.title) {
       const key = norm(parsed.title)
       if (key.length >= 6 && seen.has(key)) dups.push(p)
       else seen.set(key, p)
     }
   }
-
-  const report = (list: Paragraph[], id: string, severity: 'error' | 'warning' | 'info', title: string, detail: string, passName: string) => {
-    if (list.length) ctx.addForParagraphs(list, { id, category: 'references', severity, title: `${title}（${list.length} 条）`, detail, basis })
+  const report = (list: Paragraph[], id: string, title: string, detail: string, passName: string) => {
+    if (list.length) ctx.addForParagraphs(list, { id, category: 'references', severity: 'warning', title: `${title}（${list.length} 条）`, detail, basis })
     else ctx.pass('references', passName)
   }
-  report(noType, 'refs-type-code', 'warning', '缺少文献类型标识',
-    '题名后面应标注 [J]（期刊）、[M]（专著）、[D]（学位论文）、[C]（会议录）等。国标中这一项为"任选"，但绝大多数学校的撰写规范要求标注。', '文献类型标识')
-  report(noCarrier, 'refs-online-carrier', 'warning', '网络文献缺少载体标识 /OL',
-    '在线获取的文献，类型标识应写成 [EB/OL]、[J/OL] 这样，带上 /OL。', '电子资源载体标识')
-  report(noAccess, 'refs-access-date', 'warning', '网络文献缺少引用日期',
-    '带网址的文献应在网址前写明引用日期，如 [2026-03-01]。', '电子资源引用日期')
-  report(noYear, 'refs-year', 'warning', '没有找到出版年', '每条文献都应著录出版年。', '出版年')
-  report(dups, 'refs-duplicate', 'warning', '疑似重复的参考文献', '这些条目的题名与前面某一条相同。', '无重复条目')
-  report(tooManyAuthors, 'refs-et-al', 'info', '作者超过 3 人但全部列出',
-    '国标规定超过 3 个责任者时可只著录前 3 个，其后加"，等"或", et al."。请看本校规范是否要求这样写。', '作者数量著录')
-  report(fullwidth, 'refs-fullwidth', 'info', '参考文献里用了全角标点',
-    '国标的著录符号是半角的英文标点（". " ", " ": "）。有的学校允许中文文献用全角标点，请对照本校规范。', '著录用标点')
+  report(noYear, 'refs-year', '没有找到出版年', '每条文献都应著录出版年（网页写发布或修改日期）。', '出版年')
+  report(dups, 'refs-duplicate', '疑似重复的参考文献', '这些条目的题名与前面某一条相同。', '无重复条目')
 
   // 条数要求
   if (refRule?.min_count) {

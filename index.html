@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="毕业论文提交前体检：免费、开源、不上传论文。核验参考文献是否真实存在。" />
+    <meta name="description" content="毕业论文提交前体检：免费、开源、不上传论文。核验参考文献是否真实存在，按学校规范检查论文格式。" />
     <title>ohmypaper · 论文提交前体检</title>
     <link rel="stylesheet" href="/src/ui/style.css" />
   </head>
@@ -16,7 +16,29 @@
     </header>
 
     <main class="wrap">
-      <section class="card">
+      <nav class="tabs"><a href="#format">格式体检</a><a href="#verify">参考文献核验</a></nav>
+
+      <section class="card" id="format">
+        <h2>格式体检</h2>
+        <p class="hint">
+          选择你的学校，上传论文 docx，逐项检查页边距、字体字号、行距、标题层级、页眉页码分节、参考文献著录格式（GB/T 7714），
+          以及提交前容易忘的修订痕迹、批注和失效的交叉引用。
+        </p>
+        <div class="form-row">
+          <label for="school">学校</label>
+          <select id="school"></select>
+        </div>
+        <p id="school-note" class="privacy"></p>
+        <div class="actions">
+          <label class="file">选择 docx 文件<input id="docx" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" /></label>
+          <span id="format-progress" class="progress" aria-live="polite"></span>
+        </div>
+        <p class="privacy">🔒 docx 只在你的浏览器里解析，不会上传。.doc 和 WPS 格式请先另存为 docx。</p>
+        <div id="format-results"></div>
+        <p class="privacy">没有你的学校？<a href="https://github.com/stevenchenpk/ohmypaper/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">补充本校规则</a>，几分钟就能帮到下一届同学。</p>
+      </section>
+
+      <section class="card" id="verify">
         <h2>参考文献核验</h2>
         <p class="hint">
           把论文的参考文献列表整段粘贴进来，每条一行（带不带 [1] 序号都可以）。
