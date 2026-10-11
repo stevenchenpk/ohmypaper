@@ -26,13 +26,37 @@ references:
   min_foreign: null
 
 format:
+  # 格式体检（M2）读取这一节。每项都可以留 null，留空的项不检查，也不会误报。
+  # 字号写磅值：小四=12，五号=10.5，四号=14，小三=15，三号=16。
   paper: A4
-  margins_cm: null
+  margins_cm: null          # 例：{ top: 2.5, bottom: 2.5, left: 3.0, right: 2.5, gutter: 0 }
   body: null
+  # 例：
+  # body:
+  #   font_cn: 宋体
+  #   font_en: Times New Roman
+  #   size_pt: 12
+  #   line_spacing: 1.5 倍      # 或 固定值 20 磅 / 最小值 20 磅 / 单倍
+  #   first_line_indent_chars: 2
+  #   align: justify            # left / center / right / justify
   headings: null
-  header_footer: null
-  page_numbering: null
-  blind_review: null
+  # 例：按一级、二级、三级的顺序列出
+  # headings:
+  #   - { font_cn: 黑体, size_pt: 16, bold: true, align: center, numbering: 第一章 }
+  #   - { font_cn: 黑体, size_pt: 14, numbering: "1.1" }
+  #   - { font_cn: 黑体, size_pt: 12, numbering: "1.1.1" }
+  reference_entries: null   # 参考文献条目的版式，写法同 body
+  header: null              # 例：{ required: true, text: 某某大学本科毕业论文 }
+  page_numbers: null
+  # 例：
+  # page_numbers:
+  #   front_matter: upper_roman  # 摘要、目录：lower_roman / upper_roman / arabic / none
+  #   body: arabic
+  #   body_starts_at: 1
+  #   position: footer_center    # footer_center / footer_right / footer_outside / header_right / header_outside
+  header_footer: null       # 原文摘录
+  page_numbering: null      # 原文摘录
+  blind_review: null        # 原文摘录
 
 ai_policy:
   aigc_threshold_percent: null

@@ -1,0 +1,21 @@
+# 测试用学校档案（虚构学校），与 make_samples.py 生成的样例配套
+school: { name: 测试大学, code: test, department: null }
+degree: bachelor
+cohort: 2026
+status: draft
+sources:
+  - { title: 测试大学本科毕业论文撰写规范, url: https://example.edu.cn/rules.pdf }
+maintainers: [stevenchenpk]
+last_verified: 2026-10-11
+references: { standard: GB/T 7714-2025, style: numeric, min_count: 4, min_foreign: 1 }
+format:
+  paper: A4
+  margins_cm: { top: 2.5, bottom: 2.5, left: 3.0, right: 2.5 }
+  body: { font_cn: 宋体, font_en: Times New Roman, size_pt: 12, line_spacing: 1.5 倍, first_line_indent_chars: 2, align: justify }
+  headings:
+    - { font_cn: 黑体, size_pt: 16, bold: true, align: center, numbering: 第一章 }
+    - { font_cn: 黑体, size_pt: 14, bold: true, numbering: "1.1" }
+    - { font_cn: 黑体, size_pt: 12, bold: true, numbering: "1.1.1" }
+  reference_entries: { font_cn: 宋体, font_en: Times New Roman, size_pt: 10.5 }
+  header: { required: true, text: 某某大学本科毕业论文 }
+  page_numbers: { front_matter: upper_roman, body: arabic, body_starts_at: 1, position: footer_center }

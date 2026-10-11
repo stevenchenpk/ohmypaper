@@ -30,6 +30,9 @@ format:
   margins_cm: null
   body: null
   headings: null
+  reference_entries: null
+  header: null
+  page_numbers: null
   header_footer: null
   page_numbering: null
   blind_review: null
