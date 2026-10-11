@@ -1,0 +1,65 @@
+# 北京师范大学 本科 2026 届
+# 格式条文出自《北京师范大学本科生毕业论文写作规范》（师教培养〔2020〕6号），收录于教务部 2025-09 版《本科生毕业论文（设计）手册》。
+# 写作规范允许各院系按学科惯例另定参考文献格式，院系细则优先。
+
+school:
+  name: 北京师范大学
+  code: bnu
+  department: null
+
+degree: bachelor
+cohort: 2026
+status: draft
+
+sources:
+  - title: 本科生毕业论文（设计）手册（含师教培养〔2020〕6号写作规范、〔2020〕5号查重管理办法）
+    url: https://jwb.bnu.edu.cn/docs/2025-09/560c358804f94a8dabbf8b2ea777e627.pdf
+    published: null
+    note: 教务部（研究生院）培养处汇编，文件路径显示 2025-09 上传。写作规范落款 2020-01-13。
+  - title: 关于做好2026届本科生毕业论文（设计）查重及AIGC检测工作的通知（师教培养〔2026〕11号）
+    url: https://jwb.bnu.edu.cn/docs/2026-03/23f811ba90754c569101b05b9a58f62c.pdf
+    published: 2026-03-11
+    note: 教务部官网。标题按正文内容概括，原件首页未载标题。
+
+maintainers: [stevenchenpk]
+last_verified: 2026-10-11
+
+references:
+  # 原文："建议院（系）按照本学科通行惯例制定参考文献著录格式，也可参考国家标准 GB/T 7714—2015 或参照下面格式。"
+  # 只是建议，不是强制，留空。
+  standard: null
+  style: numeric          # "按照参考文献在文中出现的顺序采用阿拉伯数字连续编号"
+  min_count: null
+  min_foreign: null       # 原文："除个别专业的外，均应有外文参考文献"，未给数量
+
+format:
+  paper: A4
+  # "上边距和左边距侧（订口）分别留边 25 mm，下边距和右边距（切口）应分别留边 20 mm"
+  margins_cm: { top: 2.5, bottom: 2.0, left: 2.5, right: 2.0 }
+  body:
+    font_cn: 宋体
+    size_pt: 12
+    # 原文"行距 20 磅"，没写"固定值"还是"最小值"，留空。
+    line_spacing: null
+  headings:
+    # "正文标题：均加粗，段前后均 0.5 行。一级标题：三号黑体，二级标题：小三号黑体，三级标题：四号黑体"
+    - { font_cn: 黑体, size_pt: 16, bold: true, space_before: 0.5 行, space_after: 0.5 行 }
+    - { font_cn: 黑体, size_pt: 15, bold: true, space_before: 0.5 行, space_after: 0.5 行 }
+    - { font_cn: 黑体, size_pt: 14, bold: true, space_before: 0.5 行, space_after: 0.5 行 }
+  reference_entries:
+    font_cn: 宋体         # "参考文献：五号宋体，行距 16 磅"，行距写法同上，留空
+    size_pt: 10.5
+  header: null
+  page_numbers: null
+  header_footer: null
+  page_numbering: null
+  blind_review: null
+
+ai_policy:
+  aigc_threshold_percent: null   # 〔2026〕11号："AIGC检测结果……仅作为学术规范性辅助参考，不作为论文原创性判定依据"
+  detector: null                 # 在"北京师范大学教务管理服务平台"内检测，未写明检测厂商
+  allowed: []
+  forbidden:
+    - 严禁使用人工智能实施代写、剽窃、伪造等学术不端行为
+  disclosure: 毕业论文（设计）生成式人工智能工具使用须进行清晰、显著的标注或声明。（师教培养〔2026〕11号第5条）
+  penalty: null
