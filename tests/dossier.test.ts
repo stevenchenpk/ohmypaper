@@ -3,6 +3,7 @@ import { exportDossier, importDossier, libraryFromResults } from '../src/dossier
 import { migrate } from '../src/dossier/migrate'
 import { DOSSIER_VERSION, emptyDossier, validate } from '../src/dossier/schema'
 import { createStore, needsBackupReminder } from '../src/dossier/store'
+import { countsText, parseProfileForm, profileSummary, schoolLabel } from '../src/dossier/ui'
 import { parseReference } from '../src/references/parse'
 import { verifyReference } from '../src/references/verify'
 import { MOCK_DB, mockFetcher } from './fixtures/mock-sources'
@@ -156,5 +157,29 @@ describe('needsBackupReminder', () => {
   it('14 天内不提醒，超过提醒', () => {
     expect(needsBackupReminder(sample(), new Date(NOW.getTime() - 14 * day), NOW)).toBe(false)
     expect(needsBackupReminder(sample(), new Date(NOW.getTime() - 15 * day), NOW)).toBe(true)
+  })
+})
+
+describe('档案小条的纯函数', () => {
+  it('概要文字', () => {
+    const d = emptyDossier()
+    expect(profileSummary(d)).toBe('未设置')
+    d.profile.school = 'fudan'
+    d.profile.degree = 'bachelor'
+    d.profile.cohort = 2027
+    expect(profileSummary(d)).toBe('复旦大学 · 本科 · 2027 届')
+    d.profile.school = 'xyz'
+    d.profile.degree = null
+    d.profile.cohort = null
+    expect(profileSummary(d)).toBe('xyz')
+    expect(schoolLabel(null)).toBe('未设置')
+  })
+  it('条目数文字', () => {
+    expect(countsText(emptyDossier())).toBe('文献库 0 条 · AI 使用记录 0 条')
+  })
+  it('解析设置表单', () => {
+    expect(parseProfileForm(' fudan ', 'master', '2026')).toEqual({ school: 'fudan', degree: 'master', cohort: 2026 })
+    expect(parseProfileForm('', '', '')).toEqual({ school: null, degree: null, cohort: null })
+    expect(parseProfileForm('a', '', '26').error).toMatch(/4 位/)
   })
 })
