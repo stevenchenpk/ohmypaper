@@ -38,6 +38,8 @@ export interface ParsedReference {
   docType: DocTypeCode | null
   /** 是否以中文为主（决定能否用国际开放接口核验） */
   isChinese: boolean
+  /** 识别出的著录风格；格式体检会用到 */
+  style: 'gbt7714' | 'apa' | 'unknown'
 }
 
 const CJK = /[㐀-鿿豈-﫿]/g
@@ -95,6 +97,25 @@ function splitAuthorsAndTitle(text: string): { authors: string[]; title: string 
   return { authors, title: title.length > 0 ? title : null }
 }
 
+/**
+ * APA 风格：Author, A. A., & Author, B. (2020). Title of work. Journal, 1(2), 3–4.
+ * 年份放在作者后的括号里，题名紧跟其后。
+ */
+const APA_RE = /^(.+?)\s*[(（](\d{4})[a-z]?(?:,[^)）]*)?[)）]\.?\s*(.+?[.?!])(?:\s|$)/
+
+function parseApa(text: string): { authors: string[]; title: string; year: number } | null {
+  if (TYPE_RE.test(text)) return null
+  const m = text.match(APA_RE)
+  if (!m) return null
+  const authors = m[1]
+    .replace(/\s*&\s*/g, ', ')
+    .split(/,\s*(?=[A-Z][^,]*,)|\s*;\s*/)
+    .map((a) => a.replace(/,\s*$/, '').trim())
+    .filter((a) => a.length > 0 && !/^et al\.?$/i.test(a))
+  const title = m[3].replace(/[.]$/, '').trim()
+  return { authors, title, year: Number(m[2]) }
+}
+
 const INDEX_RE = /^\s*(?:\[(\d+)\]|［(\d+)］|(\d+)[.．、)]\s)/
 
 /** 把整段参考文献文本切成一条条记录 */
@@ -121,18 +142,20 @@ export function parseReference(entry: string, fallbackIndex: number): ParsedRefe
   const index = idx ? Number(idx[1] ?? idx[2] ?? idx[3]) : fallbackIndex
   const raw = entry.replace(INDEX_RE, '').trim()
   const typeMatch = raw.match(TYPE_RE)
-  const { authors, title } = splitAuthorsAndTitle(raw)
+  const apa = parseApa(raw)
+  const { authors, title } = apa ?? splitAuthorsAndTitle(raw)
 
   return {
     index,
     raw,
     authors,
     title,
-    year: extractYear(raw),
+    year: apa?.year ?? extractYear(raw),
     doi: extractDoi(raw),
     docType: (typeMatch?.[1] as DocTypeCode | undefined) ?? null,
     // 只看作者和题名部分，避免英文的 DOI、网址拉低中文占比
     isChinese: isMostlyChinese([...authors, title ?? ''].join('') || raw),
+    style: typeMatch ? 'gbt7714' : apa ? 'apa' : 'unknown',
   }
 }
 
