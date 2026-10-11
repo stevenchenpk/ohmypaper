@@ -6,7 +6,7 @@ import { DocxError } from './docx'
 import { checkDocx } from './engine'
 import type { WorkerRequest, WorkerResponse } from './worker'
 import { type SchoolProfile, profileLabel } from './profile'
-import { CATEGORY_LABEL, type Category, type Issue, type Report, SEVERITY_LABEL, type Severity } from './report'
+import { CATEGORY_LABEL, type Category, type Issue, type Report, type Severity, severityLabel } from './report'
 
 // 构建时把 schools/ 下的档案全部打进页面，运行时不联网
 const raw = import.meta.glob('../../schools/*/*.yaml', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
@@ -27,7 +27,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, props: Partial<HTMLEl
   return node
 }
 
-function renderIssue(i: Issue): HTMLElement {
+function renderIssue(i: Issue, hasProfile: boolean): HTMLElement {
   const body = el('div', { className: 'result-body' })
   if (i.expected || i.actual) {
     body.append(el('p', { className: 'reason' },
@@ -44,7 +44,7 @@ function renderIssue(i: Issue): HTMLElement {
   }
   body.append(el('p', { className: 'match' }, `依据：${i.basis}`))
   return el('article', { className: `result sev-${i.severity}` },
-    el('div', { className: 'result-head' }, el('span', { className: `tag sev-${i.severity}` }, SEVERITY_LABEL[i.severity]), el('b', {}, i.title)),
+    el('div', { className: 'result-head' }, el('span', { className: `tag sev-${i.severity}` }, severityLabel(i.severity, hasProfile)), el('b', {}, i.title)),
     body,
   )
 }
@@ -55,7 +55,7 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
 
   const summary = el('div', { className: 'summary' },
     el('p', {}, r.profileLabel ? `按 ${r.profileLabel} 的要求检查：` : '通用检查（未选学校）：'),
-    ...(['error', 'warning', 'info'] as Severity[]).filter((s) => counts[s]).map((s) => el('span', { className: `tag sev-${s}` }, `${SEVERITY_LABEL[s]} ${counts[s]}`)),
+    ...(['error', 'warning', 'info'] as Severity[]).filter((s) => counts[s]).map((s) => el('span', { className: `tag sev-${s}` }, `${severityLabel(s, r.profileLabel !== null)} ${counts[s]}`)),
     el('span', { className: 'tag verified' }, `通过 ${r.passed.length}`),
     el('span', { className: 'tag manual-check' }, `未检查，需人工确认 ${r.skipped.length}`),
   )
@@ -66,7 +66,7 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
   for (const c of cats) {
     const list = r.issues.filter((i) => i.category === c)
     if (list.length === 0) continue
-    nodes.push(el('h3', { className: 'cat' }, `${CATEGORY_LABEL[c]}（${list.length}）`), ...list.map(renderIssue))
+    nodes.push(el('h3', { className: 'cat' }, `${CATEGORY_LABEL[c]}（${list.length}）`), ...list.map((i) => renderIssue(i, r.profileLabel !== null)))
   }
 
   const details = (title: string, items: string[]) => {
