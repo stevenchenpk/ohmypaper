@@ -122,7 +122,14 @@ function runCheck(data: Uint8Array, profile: SchoolProfile | null): Promise<Repo
   })
 }
 
-export function mountFormatCheck(opts: { onReferences: (refs: string[]) => void }) {
+export interface FormatRunInfo {
+  filename: string
+  schoolPath: string | null
+  schoolLabel: string | null
+  counts: { error: number; warning: number; info: number; passed: number; skipped: number }
+}
+
+export function mountFormatCheck(opts: { onReferences: (refs: string[]) => void; onStart?: () => void; onResult?: (info: FormatRunInfo) => void }) {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
   const select = $<HTMLSelectElement>('school')
   const file = $<HTMLInputElement>('docx')
@@ -152,12 +159,17 @@ export function mountFormatCheck(opts: { onReferences: (refs: string[]) => void 
   const run = async () => {
     const f = file.files?.[0]
     if (!f) return
+    opts.onStart?.()
     status.textContent = `正在检查 ${f.name}…`
     out.replaceChildren()
     try {
       const report = await runCheck(new Uint8Array(await f.arrayBuffer()), current()?.profile ?? null)
       renderReport(report, out, opts.onReferences)
       status.textContent = `检查完成：${f.name}`
+      const c = current()
+      const counts = { error: 0, warning: 0, info: 0, passed: report.passed.length, skipped: report.skipped.length }
+      for (const i of report.issues) counts[i.severity]++
+      opts.onResult?.({ filename: f.name, schoolPath: c?.path ?? null, schoolLabel: c ? profileLabel(c.profile) : null, counts })
     } catch (e) {
       status.textContent = e instanceof DocxError ? e.message : `检查出错：${(e as Error).message}。可以到 GitHub 提 Issue 告诉我们（请不要附上论文原文）。`
     }
@@ -169,4 +181,16 @@ export function mountFormatCheck(opts: { onReferences: (refs: string[]) => void 
   })
   file.addEventListener('change', () => void run())
   showNote()
+  return {
+    /** 恢复上次的学校选择；找不到对应档案时保持不变 */
+    setSchool(path: string | null) {
+      if (path === null) select.value = ''
+      else {
+        const i = PROFILES.findIndex((p) => p.path === path)
+        if (i < 0) return
+        select.value = String(i)
+      }
+      showNote()
+    },
+  }
 }

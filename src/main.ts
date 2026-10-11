@@ -1,3 +1,8 @@
+import { citationCountsText, citationResume, formatCountsText, formatResume, previousSessionLabel, withResume } from './dossier/resume'
+import { libraryFromResults } from './dossier/io'
+import { type Dossier, emptyDossier } from './dossier/schema'
+import { createStore } from './dossier/store'
+import { type ResumeBar, mountResumeBar } from './dossier/ui'
 import { mountFormatCheck } from './format/ui'
 import { parseReferenceList } from './references/parse'
 import { type VerifyResult, type VerifyStatus, verifyAll } from './references/verify'
@@ -61,6 +66,51 @@ function renderSummary(results: VerifyResult[]) {
   summary.hidden = false
 }
 
+// ---- 继续上次检查：所有存储读写都在 store 里 try/catch，存储不可用时页面照常工作 ----
+const store = createStore()
+let dossier: Dossier = emptyDossier()
+let bar: ResumeBar | null = null
+const restoredEl = $<HTMLElement>('restored')
+const formatRestoredEl = $<HTMLElement>('format-restored')
+
+async function persist(d: Dossier) {
+  dossier = d
+  await store.save(d)
+  bar?.update(d)
+}
+
+function clearRestored() {
+  restoredEl.hidden = true
+  restoredEl.replaceChildren()
+}
+
+function showRestoredCitation(c: NonNullable<NonNullable<Dossier['resume']>['citation']>) {
+  const bad = c.items.filter((i) => i.status !== 'verified')
+  restoredEl.replaceChildren(
+    el('p', { className: 'prev-label' }, previousSessionLabel(c.at)),
+    el('p', {}, `参考文献核验 · 上次记录：${citationCountsText(c)}`),
+    ...(bad.length
+      ? [el('p', { className: 'hint' }, '上次需要你处理的条目（点"开始核验"可重新核验）：'),
+         el('ul', {}, ...bad.map((i) => el('li', {}, el('span', { className: `tag ${i.status}` }, `上次：${STATUS_LABEL[i.status]}`), ` [${i.index}] ${i.reason}`)))]
+      : [el('p', { className: 'hint' }, '这是上次的记录，不代表现在的状态；提交前请重新核验。'),]),
+  )
+  restoredEl.hidden = false
+}
+
+function showRestoredFormat(f: NonNullable<NonNullable<Dossier['resume']>['format']>) {
+  formatRestoredEl.replaceChildren(
+    el('p', { className: 'prev-label' }, previousSessionLabel(f.at)),
+    el('p', {}, `格式体检 · ${f.filename}（${f.schoolLabel ?? '未选学校'}）· ${formatCountsText(f)}`),
+    el('p', { className: 'hint' }, '这是上次的统计，不是本次检查结果；没有保存文件内容，请重新选择 docx 再检查一次。'),
+  )
+  formatRestoredEl.hidden = false
+}
+
+function clearFormatRestored() {
+  formatRestoredEl.hidden = true
+  formatRestoredEl.replaceChildren()
+}
+
 async function run() {
   const refs = parseReferenceList(input.value)
   if (refs.length === 0) {
@@ -70,6 +120,7 @@ async function run() {
   runBtn.disabled = true
   resultsEl.replaceChildren()
   summary.hidden = true
+  clearRestored()
   progress.textContent = `正在核验 0 / ${refs.length}…`
 
   const results = await verifyAll(refs, {
@@ -83,6 +134,9 @@ async function run() {
   resultsEl.replaceChildren(...sorted.map(renderCard))
   progress.textContent = '核验完成。'
   runBtn.disabled = false
+  const now = new Date()
+  const next = withResume(dossier, { citation: citationResume(input.value, results, now) }, now)
+  void persist({ ...next, library: libraryFromResults(results, dossier.library, now) })
 }
 
 runBtn.addEventListener('click', () => void run())
@@ -91,10 +145,39 @@ $<HTMLButtonElement>('sample').addEventListener('click', () => {
   input.focus()
 })
 
-mountFormatCheck({
+const formatCheck = mountFormatCheck({
   onReferences: (refs) => {
     input.value = refs.map((r, i) => `[${i + 1}] ${r}`).join('\n')
     document.getElementById('verify')?.scrollIntoView({ behavior: 'smooth' })
     void run()
   },
+  onStart: clearFormatRestored,
+  onResult: (info) => void persist(withResume(dossier, { format: formatResume(info) })),
 })
+
+void (async () => {
+  dossier = (await store.load()) ?? emptyDossier()
+  bar = mountResumeBar($<HTMLElement>('resume'), {
+    store,
+    dossier,
+    onChange: (d) => (dossier = d),
+    onClear: () => {
+      clearRestored()
+      clearFormatRestored()
+    },
+    onRestore: (d) => {
+      const c = d.resume?.citation
+      if (c) {
+        input.value = c.refsText
+        resultsEl.replaceChildren()
+        summary.hidden = true
+        showRestoredCitation(c)
+      }
+      const f = d.resume?.format
+      if (f) {
+        formatCheck.setSchool(f.schoolPath)
+        showRestoredFormat(f)
+      }
+    },
+  })
+})()

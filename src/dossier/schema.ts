@@ -80,6 +80,32 @@ export interface ChecklistRecord extends Open {
   updated: string
 }
 
+/** 「继续上次检查」要记住的内容。不含论文正文、不含 docx 内容 */
+export interface CitationResume extends Open {
+  /** 学生粘贴的参考文献文本 */
+  refsText: string
+  at: string
+  total: number
+  counts: Partial<Record<VerifyStatus, number>>
+  /** 每条的状态摘要（序号 + 状态 + 原因），不含检索到的库中记录 */
+  items: { index: number; status: VerifyStatus; reason: string }[]
+}
+
+export interface FormatResume extends Open {
+  /** 只记文件名，不记 docx 内容 */
+  filename: string
+  at: string
+  /** 所选学校档案路径，如 schools/fudan/bachelor-2027.yaml；未选学校为 null */
+  schoolPath: string | null
+  schoolLabel: string | null
+  counts: { error: number; warning: number; info: number; passed: number; skipped: number }
+}
+
+export interface Resume extends Open {
+  citation?: CitationResume | null
+  format?: FormatResume | null
+}
+
 export interface Dossier extends Open {
   format: typeof DOSSIER_FORMAT
   version: number
@@ -89,6 +115,8 @@ export interface Dossier extends Open {
   library: LibraryEntry[]
   ai_log: AiLogEntry[]
   checklists: Record<string, ChecklistRecord>
+  /** 可选；v0 内新增的附加字段，旧文件没有也合法 */
+  resume?: Resume
 }
 
 export function emptyDossier(now: Date = new Date()): Dossier {
@@ -109,7 +137,7 @@ export function emptyDossier(now: Date = new Date()): Dossier {
 export function hasContent(d: Dossier): boolean {
   const p = d.profile
   const filled = [p.school, p.degree, p.cohort, p.department, p.major, p.title].some((v) => v !== null && v !== undefined && v !== '')
-  return filled || d.library.length > 0 || d.ai_log.length > 0 || Object.keys(d.checklists).length > 0
+  return filled || !!d.resume?.citation || !!d.resume?.format || d.library.length > 0 || d.ai_log.length > 0 || Object.keys(d.checklists).length > 0
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -188,6 +216,47 @@ export function validate(d: unknown): string[] {
         if (!isObj(c.answers)) errs.push(`checklists.${k}.answers 应为对象。`)
         if (!isTime(c.updated)) errs.push(`checklists.${k}.updated 应为 ISO 时间。`)
       }
+    }
+  }
+  if (d.resume !== undefined && d.resume !== null) errs.push(...validateResume(d.resume))
+  return errs
+}
+
+const isCount = (v: unknown) => Number.isInteger(v) && (v as number) >= 0
+
+function validateResume(r: unknown): string[] {
+  const errs: string[] = []
+  if (!isObj(r)) return ['resume 格式不对。']
+  const c = r.citation
+  if (c !== undefined && c !== null) {
+    if (!isObj(c)) errs.push('resume.citation 格式不对。')
+    else {
+      if (!isStr(c.refsText)) errs.push('resume.citation.refsText 应为文字。')
+      if (!isTime(c.at)) errs.push('resume.citation.at 应为 ISO 时间。')
+      if (!isCount(c.total)) errs.push('resume.citation.total 应为非负整数。')
+      if (!isObj(c.counts)) errs.push('resume.citation.counts 应为对象。')
+      else {
+        for (const [k, v] of Object.entries(c.counts)) {
+          if (!(CHECK_STATUSES as readonly unknown[]).includes(k) || !isCount(v)) errs.push(`resume.citation.counts.${k} 无效。`)
+        }
+      }
+      if (!Array.isArray(c.items)) errs.push('resume.citation.items 应为列表。')
+      else {
+        c.items.forEach((it, i) => {
+          if (!isObj(it) || !isCount(it.index) || !(CHECK_STATUSES as readonly unknown[]).includes(it.status) || !isStr(it.reason)) errs.push(`resume.citation.items[${i}] 格式不对。`)
+        })
+      }
+    }
+  }
+  const f = r.format
+  if (f !== undefined && f !== null) {
+    if (!isObj(f)) errs.push('resume.format 格式不对。')
+    else {
+      if (!isStr(f.filename)) errs.push('resume.format.filename 应为文字。')
+      if (!isTime(f.at)) errs.push('resume.format.at 应为 ISO 时间。')
+      if (!isOptStr(f.schoolPath) || !isOptStr(f.schoolLabel)) errs.push('resume.format.school 应为文字或空。')
+      const n = f.counts
+      if (!isObj(n) || !['error', 'warning', 'info', 'passed', 'skipped'].every((k) => isCount(n[k]))) errs.push('resume.format.counts 格式不对。')
     }
   }
   return errs

@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { exportDossier, importDossier, libraryFromResults } from '../src/dossier/io'
 import { migrate } from '../src/dossier/migrate'
 import { DOSSIER_VERSION, emptyDossier, validate } from '../src/dossier/schema'
-import { createStore, needsBackupReminder } from '../src/dossier/store'
-import { countsText, parseProfileForm, profileSummary, schoolLabel } from '../src/dossier/ui'
+import { STORAGE_KEY, createStore } from '../src/dossier/store'
+import { citationCountsText, citationResume, formatCountsText, formatResume, formatTime, hasResume, previousSessionLabel, withResume } from '../src/dossier/resume'
 import { parseReference } from '../src/references/parse'
 import { verifyReference } from '../src/references/verify'
 import { MOCK_DB, mockFetcher } from './fixtures/mock-sources'
@@ -131,9 +131,35 @@ describe('libraryFromResults', () => {
   })
 })
 
-describe('store', () => {
-  it('没有 indexedDB 时退回内存', async () => {
-    expect(typeof indexedDB).toBe('undefined')
+const stubStorage = (impl: Partial<Storage> | null) => {
+  if (impl === null) return void vi.stubGlobal('localStorage', undefined)
+  vi.stubGlobal('localStorage', impl)
+}
+const memStorage = (): Storage => {
+  const m = new Map<string, string>()
+  return {
+    getItem: (k: string) => m.get(k) ?? null,
+    setItem: (k: string, v: string) => void m.set(k, v),
+    removeItem: (k: string) => void m.delete(k),
+  } as unknown as Storage
+}
+
+describe('store（localStorage）', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('存了再读回来，清除后没有', async () => {
+    stubStorage(memStorage())
+    const s = createStore()
+    const d = withResume(emptyDossier(NOW), { format: formatResume({ filename: 'a.docx', schoolPath: null, schoolLabel: null, counts: { error: 1, warning: 0, info: 0, passed: 2, skipped: 3 } }, NOW) }, NOW)
+    await s.save(d)
+    expect(s.persistent).toBe(true)
+    expect(await createStore().load()).toEqual(d)
+    await s.clear()
+    expect(await createStore().load()).toBeNull()
+  })
+
+  it('localStorage 不存在：退回内存，persistent=false', async () => {
+    stubStorage(null)
     const s = createStore()
     expect(s.persistent).toBe(false)
     expect(await s.load()).toBeNull()
@@ -143,43 +169,103 @@ describe('store', () => {
     await s.clear()
     expect(await s.load()).toBeNull()
   })
+
+  it('读写全部抛错（隐私模式/存储已满）：不抛出，退回内存', async () => {
+    const boom = () => {
+      throw new Error('denied')
+    }
+    stubStorage({ getItem: boom, setItem: boom, removeItem: boom })
+    const s = createStore()
+    const d = sample()
+    await expect(s.save(d)).resolves.toBeUndefined()
+    expect(s.persistent).toBe(false)
+    expect(await s.load()).toEqual(d)
+    await expect(s.clear()).resolves.toBeUndefined()
+  })
+
+  it('访问 localStorage 本身就抛错', async () => {
+    vi.stubGlobal('localStorage', undefined)
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, get: () => { throw new Error('SecurityError') } })
+    const s = createStore()
+    expect(s.persistent).toBe(false)
+    await expect(s.save(sample())).resolves.toBeUndefined()
+    delete (globalThis as Record<string, unknown>).localStorage
+  })
+
+  it('存储里是损坏的内容：当作没有', async () => {
+    const m = memStorage()
+    m.setItem(STORAGE_KEY, '{不是json')
+    stubStorage(m)
+    expect(await createStore().load()).toBeNull()
+    m.setItem(STORAGE_KEY, JSON.stringify({ format: 'other' }))
+    expect(await createStore().load()).toBeNull()
+  })
 })
 
-describe('needsBackupReminder', () => {
-  const day = 86400_000
-  it('空档案不提醒', () => {
-    expect(needsBackupReminder(emptyDossier(NOW), null, NOW)).toBe(false)
-    expect(needsBackupReminder(null, null, NOW)).toBe(false)
-  })
-  it('有内容且从没导出过：提醒', () => {
-    expect(needsBackupReminder(sample(), null, NOW)).toBe(true)
-  })
-  it('14 天内不提醒，超过提醒', () => {
-    expect(needsBackupReminder(sample(), new Date(NOW.getTime() - 14 * day), NOW)).toBe(false)
-    expect(needsBackupReminder(sample(), new Date(NOW.getTime() - 15 * day), NOW)).toBe(true)
-  })
-})
+describe('继续上次检查', () => {
+  const opts = { fetcher: mockFetcher(MOCK_DB) }
+  const text = 'LeCun Y, Bengio Y, Hinton G. Deep learning[J]. Nature, 2015, 521: 436-444. DOI:10.1038/nature14539\n张三. 某中文研究[J]. 某学报, 2020, 1(2): 3-4.'
+  const run = () => Promise.all(text.split('\n').map((t, i) => verifyReference(parseReference(t, i + 1), opts)))
 
-describe('档案小条的纯函数', () => {
-  it('概要文字', () => {
-    const d = emptyDossier()
-    expect(profileSummary(d)).toBe('未设置')
-    d.profile.school = 'fudan'
-    d.profile.degree = 'bachelor'
-    d.profile.cohort = 2027
-    expect(profileSummary(d)).toBe('复旦大学 · 本科 · 2027 届')
-    d.profile.school = 'xyz'
-    d.profile.degree = null
-    d.profile.cohort = null
-    expect(profileSummary(d)).toBe('xyz')
-    expect(schoolLabel(null)).toBe('未设置')
+  it('核验摘要：计数、逐条状态，不含库中记录', async () => {
+    const c = citationResume(text, await run(), NOW)
+    expect(c.refsText).toBe(text)
+    expect(c.total).toBe(2)
+    expect(c.counts).toEqual({ verified: 1, manual: 1 })
+    expect(c.items.map((i) => i.status)).toEqual(['verified', 'manual'])
+    expect(JSON.stringify(c)).not.toContain('match')
+    expect(citationCountsText(c)).toBe('共 2 条：需人工核对 1 · 已核实 1')
   })
-  it('条目数文字', () => {
-    expect(countsText(emptyDossier())).toBe('文献库 0 条 · AI 使用记录 0 条')
+
+  it('格式体检只存文件名、学校和统计数字', () => {
+    const f = formatResume({ filename: '毕业论文.docx', schoolPath: 'schools/fudan/bachelor-2027.yaml', schoolLabel: '复旦大学', counts: { error: 2, warning: 1, info: 0, passed: 10, skipped: 4 } }, NOW)
+    expect(Object.keys(f).sort()).toEqual(['at', 'counts', 'filename', 'schoolLabel', 'schoolPath'])
+    const t = formatCountsText(f)
+    expect(t).toContain('未检查，需人工确认 4')
+    expect(t).toContain('当时通过 10')
   })
-  it('解析设置表单', () => {
-    expect(parseProfileForm(' fudan ', 'master', '2026')).toEqual({ school: 'fudan', degree: 'master', cohort: 2026 })
-    expect(parseProfileForm('', '', '')).toEqual({ school: null, degree: null, cohort: null })
-    expect(parseProfileForm('a', '', '26').error).toMatch(/4 位/)
+
+  it('有未检查项时，摘要里一定写出未检查数量', () => {
+    const t = formatCountsText(formatResume({ filename: 'a.docx', schoolPath: null, schoolLabel: null, counts: { error: 0, warning: 0, info: 0, passed: 5, skipped: 7 } }, NOW))
+    expect(t).toContain('未检查，需人工确认 7')
+  })
+
+  it('恢复标签写明是上次会话、带时间、不是本次核验', () => {
+    const l = previousSessionLabel(NOW.toISOString())
+    expect(l).toMatch(/上次会话/)
+    expect(l).toMatch(/不是本次核验/)
+    expect(l).toContain(formatTime(NOW.toISOString()))
+  })
+
+  it('withResume 不改原对象，且合并另一半', async () => {
+    const d0 = emptyDossier(NOW)
+    expect(hasResume(d0)).toBe(false)
+    const d1 = withResume(d0, { citation: citationResume(text, await run(), NOW) }, NOW)
+    const d2 = withResume(d1, { format: formatResume({ filename: 'a.docx', schoolPath: null, schoolLabel: null, counts: { error: 0, warning: 0, info: 0, passed: 0, skipped: 0 } }, NOW) }, NOW)
+    expect(d0.resume).toBeUndefined()
+    expect(d2.resume?.citation).toBeDefined()
+    expect(d2.resume?.format).toBeDefined()
+    expect(hasResume(d2)).toBe(true)
+    expect(validate(d2)).toEqual([])
+  })
+
+  it('导出再导入，resume 完整保留；旧文件没有 resume 也合法', async () => {
+    const d = withResume(emptyDossier(NOW), { citation: citationResume(text, await run(), NOW) }, NOW)
+    expect(importDossier(exportDossier(d))).toEqual(d)
+    expect(importDossier(exportDossier(emptyDossier(NOW))).resume).toBeUndefined()
+  })
+
+  it('导入时校验 resume', async () => {
+    const d = withResume(emptyDossier(NOW), { citation: citationResume(text, await run(), NOW) }, NOW)
+    ;(d.resume!.citation!.items[0] as { status: string }).status = '通过'
+    expect(() => importDossier(JSON.stringify(d))).toThrow(/resume/)
+    const e = withResume(emptyDossier(NOW), {}, NOW) as Record<string, unknown>
+    e.resume = { format: { filename: 1, at: 'x', counts: {} } }
+    expect(validate(e)).not.toEqual([])
+  })
+
+  it('不含任何"通过"字样来描述未核实的状态', async () => {
+    const c = citationResume(text, await run(), NOW)
+    expect(citationCountsText(c)).not.toContain('通过')
   })
 })

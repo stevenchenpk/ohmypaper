@@ -16,6 +16,8 @@
     </header>
 
     <main class="wrap">
+      <section class="card resume" id="resume" hidden></section>
+
       <nav class="tabs"><a href="#format">格式体检</a><a href="#verify">参考文献核验</a></nav>
 
       <section class="card" id="format">
@@ -34,6 +36,7 @@
           <span id="format-progress" class="progress" aria-live="polite"></span>
         </div>
         <p class="privacy">🔒 docx 只在你的浏览器里解析，正文不会发往任何服务器。.doc 和 WPS 格式请先另存为 docx。</p>
+        <div id="format-restored" class="restored" hidden></div>
         <div id="format-results"></div>
         <p class="privacy">没有你的学校？<a href="https://github.com/stevenchenpk/ohmypaper/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">补充本校规则</a>，几分钟就能帮到下一届同学。</p>
       </section>
@@ -59,6 +62,7 @@
         </p>
       </section>
 
+      <section id="restored" class="card restored" hidden></section>
       <section id="summary" class="summary" hidden></section>
       <section id="results" class="results"></section>
 

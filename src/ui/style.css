@@ -179,3 +179,15 @@ details.notes summary { cursor: pointer; color: var(--muted); }
 details.notes ul { margin: 6px 0; padding-left: 20px; }
 .tag.manual-check { color: var(--error); background: var(--error-bg); }
 ul.skipped { margin: 6px 0; padding-left: 20px; font-size: 14px; }
+
+/* 继续上次检查（src/dossier/ui.ts），整体搬走时连同这一段 */
+.resume { margin-top: 16px; }
+.resume h2 { margin-top: 0; }
+.resume-info p { margin: 4px 0; }
+.resume-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.resume-actions button, .resume-actions .file { padding: 4px 14px; font-size: 14px; }
+.resume-actions .danger { color: #b3261e; border-color: #b3261e; }
+.resume-msg { margin: 8px 0 0; font-size: 13px; white-space: pre-line; }
+.restored { border-left: 4px solid var(--muted); }
+.restored .prev-label { font-weight: 600; margin: 0 0 6px; }
+.restored ul { margin: 6px 0 0; padding-left: 20px; font-size: 14px; }
