@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="毕业论文提交前体检：免费、开源、不上传论文。核验参考文献是否真实存在，按学校规范检查论文格式。" />
+    <meta name="description" content="毕业论文提交前体检：免费、开源，论文正文默认只在浏览器里处理。核验参考文献是否真实存在，按学校规范检查论文格式。" />
     <title>ohmypaper · 论文提交前体检</title>
     <link rel="stylesheet" href="/src/ui/style.css" />
   </head>
@@ -33,7 +33,7 @@
           <label class="file">选择 docx 文件<input id="docx" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" /></label>
           <span id="format-progress" class="progress" aria-live="polite"></span>
         </div>
-        <p class="privacy">🔒 docx 只在你的浏览器里解析，不会上传。.doc 和 WPS 格式请先另存为 docx。</p>
+        <p class="privacy">🔒 docx 只在你的浏览器里解析，正文不会发往任何服务器。.doc 和 WPS 格式请先另存为 docx。</p>
         <div id="format-results"></div>
         <p class="privacy">没有你的学校？<a href="https://github.com/stevenchenpk/ohmypaper/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">补充本校规则</a>，几分钟就能帮到下一届同学。</p>
       </section>
@@ -54,7 +54,7 @@
           <span id="progress" class="progress" aria-live="polite"></span>
         </div>
         <p class="privacy">
-          🔒 隐私：整个过程在你的浏览器里完成，论文不会上传到任何服务器。
+          🔒 隐私：论文正文和研究数据默认只在你的浏览器里处理，联网核验只发送你确认过的参考文献信息。
           发往公开学术库的只有单条文献的标题或 DOI。
         </p>
       </section>
