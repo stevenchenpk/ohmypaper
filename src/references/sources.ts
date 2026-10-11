@@ -63,6 +63,19 @@ const firstPageOf = (page: string | undefined | null) => page?.split(/[-–—]/
 
 export type Fetcher = (url: string) => Promise<Response>
 
+/** 接口返回非 2xx。429 表示额度用完（OpenAlex 不带 key 时有每日额度），要和"查不到"区分开 */
+export class SourceError extends Error {
+  constructor(
+    readonly source: 'crossref' | 'openalex' | 'datacite',
+    readonly status: number,
+  ) {
+    super(`${source} ${status}`)
+  }
+  get rateLimited() {
+    return this.status === 429
+  }
+}
+
 export interface SourceOptions {
   fetcher?: Fetcher
   /** Crossref polite pool 要求附带联系邮箱 */
@@ -115,7 +128,7 @@ export async function crossrefByDoi(doi: string, opts: SourceOptions = {}): Prom
   const mailto = encodeURIComponent(opts.mailto ?? DEFAULT_MAILTO)
   const res = await fetcherOf(opts)(`https://api.crossref.org/works/${encodeURIComponent(doi)}?mailto=${mailto}`)
   if (res.status === 404) return null
-  if (!res.ok) throw new Error(`Crossref ${res.status}`)
+  if (!res.ok) throw new SourceError('crossref', res.status)
   const body = (await res.json()) as { message: CrossrefItem }
   return fromCrossref(body.message)
 }
@@ -127,7 +140,7 @@ export async function crossrefSearch(query: string, opts: SourceOptions = {}, ro
   const res = await fetcherOf(opts)(
     `https://api.crossref.org/works?query.bibliographic=${q}&rows=${rows}&select=${CROSSREF_SELECT}&mailto=${mailto}`,
   )
-  if (!res.ok) throw new Error(`Crossref ${res.status}`)
+  if (!res.ok) throw new SourceError('crossref', res.status)
   const body = (await res.json()) as { message: { items: CrossrefItem[] } }
   return body.message.items.map(fromCrossref).filter((w): w is CandidateWork => w !== null)
 }
@@ -151,7 +164,7 @@ interface DataciteAttributes {
 export async function dataciteByDoi(doi: string, opts: SourceOptions = {}): Promise<CandidateWork | null> {
   const res = await fetcherOf(opts)(`https://api.datacite.org/dois/${encodeURIComponent(doi)}`)
   if (res.status === 404) return null
-  if (!res.ok) throw new Error(`DataCite ${res.status}`)
+  if (!res.ok) throw new SourceError('datacite', res.status)
   const a = ((await res.json()) as { data?: { attributes?: DataciteAttributes } }).data?.attributes
   const title = a?.titles?.[0]?.title
   if (!a || !title) return null
@@ -223,7 +236,7 @@ export async function openAlexSearch(title: string, opts: SourceOptions = {}, pe
   // OpenAlex 的 search 参数对逗号等符号敏感，先清理
   const q = encodeURIComponent(title.replace(/[,:;|]/g, ' ').slice(0, 300))
   const res = await fetcherOf(opts)(`https://api.openalex.org/works?search=${q}&per-page=${perPage}&mailto=${mailto}`)
-  if (!res.ok) throw new Error(`OpenAlex ${res.status}`)
+  if (!res.ok) throw new SourceError('openalex', res.status)
   const body = (await res.json()) as { results: OpenAlexWork[] }
   return body.results.map(fromOpenAlex).filter((w): w is CandidateWork => w !== null)
 }

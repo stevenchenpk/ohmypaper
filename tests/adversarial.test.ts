@@ -126,3 +126,17 @@ describe('没比对上的项不算通过', () => {
     expect(r.reason).toContain('DOI、标题、作者、年份、卷期页码')
   })
 })
+
+describe('接口额度', () => {
+  it('OpenAlex 返回 429 时说明是额度用完，不判查无此文', async () => {
+    const limited: Fetcher = async (input) => {
+      const url = new URL(input)
+      if (url.hostname === 'api.openalex.org') return new Response('Too Many Requests', { status: 429 })
+      return new Response(JSON.stringify({ message: { items: [] } }), { status: 200 })
+    }
+    const [ref] = parseReferenceList('[1] DOE J. A study that may not exist[J]. Journal, 2020, 1(1): 1-2.')
+    const r = await verifyReference(ref, { fetcher: limited })
+    expect(r.status).toBe('error')
+    expect(r.reason).toContain('额度')
+  })
+})

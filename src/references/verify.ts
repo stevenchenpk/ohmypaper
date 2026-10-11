@@ -9,6 +9,7 @@ import { type ParsedReference, surnameOf } from './parse'
 import { normalizeTitle, titleSimilarity } from './similarity'
 import {
   type CandidateWork,
+  SourceError,
   type SourceOptions,
   type WorkKind,
   bookSearchLinks,
@@ -216,6 +217,8 @@ interface SearchOutcome {
   allFailed: boolean
   /** 有一个库失败，结果不完整 */
   partial: boolean
+  /** 失败原因是额度用完 */
+  rateLimited: boolean
 }
 
 async function search(ref: ParsedReference, opts: SourceOptions): Promise<SearchOutcome> {
@@ -228,6 +231,7 @@ async function search(ref: ParsedReference, opts: SourceOptions): Promise<Search
     top: best(ref, candidates),
     allFailed: cr.status === 'rejected' && oa.status === 'rejected',
     partial: cr.status === 'rejected' || oa.status === 'rejected',
+    rateLimited: [cr, oa].some((x) => x.status === 'rejected' && x.reason instanceof SourceError && x.reason.rateLimited),
   }
 }
 
@@ -236,7 +240,8 @@ function notFound(ref: ParsedReference, s: SearchOutcome, reason: string): Verif
   const near = s.top?.work ?? null
   const sim = s.top?.sim ?? null
   if (s.partial) {
-    return result(ref, 'error', '有一个学术库这次没有响应，检索结果不完整，暂时不能下结论。请稍后重试。', near, sim)
+    const why = s.rateLimited ? '学术库今天的免费查询额度用完了' : '有一个学术库这次没有响应'
+    return result(ref, 'error', `${why}，检索结果不完整，暂时不能下结论。请稍后重试。`, near, sim)
   }
   if (ref.docType && POORLY_INDEXED.has(ref.docType)) {
     return result(
