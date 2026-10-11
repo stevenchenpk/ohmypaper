@@ -48,13 +48,15 @@ const normRaw = (s: string) => s.normalize('NFKC').toLowerCase().replace(/[\s\p{
 
 function toEntry(r: VerifyResult, id: string, at: string): LibraryEntry {
   const { ref, match } = r
+  // 只有"已核实"时才用库里的记录补全字段；信息不符的记录可能是别的文献，不能写成学生的条目
+  const trusted = r.status === 'verified' ? match : null
   const csl: Record<string, unknown> = { type: (ref.docType && CSL_TYPE[ref.docType]) || 'document' }
-  const title = ref.title ?? match?.title
+  const title = ref.title ?? trusted?.title
   if (title) csl.title = title
   if (ref.authors.length > 0) csl.author = ref.authors.map((a) => (ref.isChinese ? { literal: a } : { family: surnameOf(a) }))
-  const year = ref.year ?? match?.year
+  const year = ref.year ?? trusted?.year
   if (year) csl.issued = { 'date-parts': [[year]] }
-  const doi = ref.doi ?? match?.doi
+  const doi = ref.doi ?? trusted?.doi
   if (doi) csl.DOI = doi
   return {
     id,

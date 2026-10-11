@@ -113,6 +113,15 @@ describe('libraryFromResults', () => {
     expect(first[0].check?.at).toBe(NOW.toISOString())
   })
 
+  it('信息不符时不拿库里的记录冒充学生的条目', async () => {
+    // DOI 借自 Deep learning，条目里没有这个标题
+    const r = await verifyReference(parseReference('WANG X — Invisible libraries — 2015 — DOI:10.1038/nature14539', 1), opts)
+    expect(r.status).toBe('mismatch')
+    const [e] = libraryFromResults([r], [], NOW)
+    expect(e.csl.title).toBeUndefined()
+    expect(e.check?.status).toBe('mismatch')
+  })
+
   it('没有 DOI 时按归一化原文匹配', async () => {
     const results = await run()
     const lib = libraryFromResults(results, [], NOW)
