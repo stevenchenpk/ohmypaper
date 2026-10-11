@@ -19,7 +19,7 @@ sources:
   - title: 关于做好2026届本科生毕业论文（设计）查重及AIGC检测工作的通知（师教培养〔2026〕11号）
     url: https://jwb.bnu.edu.cn/docs/2026-03/23f811ba90754c569101b05b9a58f62c.pdf
     published: 2026-03-11
-    note: 教务部官网。标题按正文内容概括，原件首页未载标题。
+    note: 教务部官网。标题按正文内容概括，原件首页未载标题。AI 条文在这份 PDF 正文里；同名 HTML 通知页（jwb.bnu.edu.cn/pygc/sjjx/bksbylw/cfe30c86142c4f66bdf750903afe57ce.htm）只列了两个附件，没有这些条文。
 
 maintainers: [stevenchenpk]
 last_verified: 2026-10-11
