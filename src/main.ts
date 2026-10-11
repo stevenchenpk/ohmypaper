@@ -1,3 +1,4 @@
+import { mountFormatCheck } from './format/ui'
 import { parseReferenceList } from './references/parse'
 import { type VerifyResult, type VerifyStatus, verifyAll } from './references/verify'
 
@@ -88,4 +89,12 @@ runBtn.addEventListener('click', () => void run())
 $<HTMLButtonElement>('sample').addEventListener('click', () => {
   input.value = SAMPLE
   input.focus()
+})
+
+mountFormatCheck({
+  onReferences: (refs) => {
+    input.value = refs.map((r, i) => `[${i + 1}] ${r}`).join('\n')
+    document.getElementById('verify')?.scrollIntoView({ behavior: 'smooth' })
+    void run()
+  },
 })

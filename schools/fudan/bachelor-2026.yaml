@@ -1,5 +1,6 @@
 # 复旦大学 本科 2026 届
-# 目前只整理了 AI 使用规定；格式要求待 M2 补充。
+# 没有找到全校统一的本科论文格式规范，格式由各院系自定（经济、新闻、哲学、国际文化交流学院的页边距和行距互不相同），
+# 所以全校档案的 format 和 references 留空。院系档案待补。
 
 school:
   name: 复旦大学
@@ -12,9 +13,13 @@ status: draft
 
 sources:
   - title: 复旦大学关于在本科毕业论文（设计）中使用AI工具的规定（试行）
+    url: https://fit.fudan.edu.cn/Data/View/5005
+    published: 2024-11-28
+    note: 复旦大学未来信息创新学院"文件汇编"栏目，复旦官网域名。发布日期据复旦新闻文化网 2024-12-20 报道（https://news.fudan.edu.cn/2024/1220/c3163a143685/page.htm）。
+  - title: 复旦大学关于在本科毕业论文（设计）中使用AI工具的规定（试行）
     url: https://www.zbu.edu.cn/jwc/2025/0409/c912a93005/pagem.htm
     published: null
-    note: 郑州工商学院教务处转载全文，非复旦官网。规定自发布之日起施行，未写明适用届次。需找到复旦官网原文替换。
+    note: 郑州工商学院教务处转载全文，非复旦官网，用于核对条文。
 
 maintainers: [stevenchenpk]
 last_verified: 2026-10-11
@@ -30,6 +35,9 @@ format:
   margins_cm: null
   body: null
   headings: null
+  reference_entries: null
+  header: null
+  page_numbers: null
   header_footer: null
   page_numbering: null
   blind_review: null
