@@ -64,9 +64,10 @@ export function buildBenchmark(): BenchCase[] {
   for (const w of REAL_WORKS) cases.push({ text: cite(w), expected: 'verified', kind: '真实·带DOI' })
   // 5 条真实文献，不带 DOI，靠检索核实
   for (const w of REAL_WORKS.slice(0, 5)) cases.push({ text: cite(w, { doi: null }), expected: 'verified', kind: '真实·无DOI' })
-  // 5 条虚构 DOI
+  // 5 条虚构 DOI，标题也是编的。（真标题配错 DOI 不算假文献，判"信息不符"并给出正确 DOI，见 adversarial.test.ts）
   for (let i = 0; i < 5; i++) {
-    cases.push({ text: cite(REAL_WORKS[i], { doi: `10.9999/fake.${2020 + i}.${i}` }), expected: 'not_found', kind: '虚构DOI' })
+    const title = `${FAKE_TITLES[i]}: a replication study`
+    cases.push({ text: `ROE K. ${title}[J]. Imaginary Review, 2020, 3(1): 1-9. DOI:10.9999/fake.${2020 + i}.${i}.`, expected: 'not_found', kind: '虚构DOI' })
   }
   // 5 条 DOI 真实，但标题是另一篇（AI 张冠李戴）
   for (let i = 0; i < 5; i++) {
