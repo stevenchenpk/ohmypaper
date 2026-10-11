@@ -1,0 +1,43 @@
+# 学校规则档案模板。复制到 schools/<学校代码>/<学位>-<届次>.yaml 后填写。
+# 规则：每一项都要能在 sources 里的文件中找到出处；拿不准就留 null，不要猜。
+
+school:
+  name: 某某大学
+  code: example
+  department: null        # 全校通用填 null；只适用于某学院就写学院名
+
+degree: bachelor          # bachelor 本科 / master 硕士 / doctor 博士
+cohort: 2026              # 毕业届次
+status: draft             # draft 待核对 / reviewed 已核对 / outdated 已过期
+
+sources:
+  - title: 某某大学本科毕业论文（设计）撰写规范
+    url: https://example.edu.cn/xxx.pdf
+    published: 2025-10-01
+    note: null
+
+maintainers: [your-github-name]
+last_verified: 2026-10-11
+
+references:
+  standard: GB/T 7714-2015  # 注意：GB/T 7714-2025 已于 2026-07-01 实施，以学校文件为准
+  style: numeric
+  min_count: null
+  min_foreign: null
+
+format:
+  paper: A4
+  margins_cm: null
+  body: null
+  headings: null
+  header_footer: null
+  page_numbering: null
+  blind_review: null
+
+ai_policy:
+  aigc_threshold_percent: null
+  detector: null
+  allowed: []
+  forbidden: []
+  disclosure: null
+  penalty: null

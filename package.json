@@ -1,0 +1,23 @@
+{
+  "name": "ohmypaper",
+  "version": "0.1.0-dev",
+  "private": true,
+  "description": "毕业论文提交前体检：查文献真伪、查格式规范、写 AI 使用声明。",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "validate:schools": "node scripts/validate-schools.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "vitest": "^3.2.0",
+    "yaml": "^2.8.0",
+    "ajv": "^8.17.0"
+  }
+}

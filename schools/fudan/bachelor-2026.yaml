@@ -1,0 +1,55 @@
+# 复旦大学 本科 2026 届
+# 目前只整理了 AI 使用规定；格式要求待 M2 补充。
+
+school:
+  name: 复旦大学
+  code: fudan
+  department: null
+
+degree: bachelor
+cohort: 2026
+status: draft
+
+sources:
+  - title: 复旦大学关于在本科毕业论文（设计）中使用AI工具的规定（试行）
+    url: https://www.zbu.edu.cn/jwc/2025/0409/c912a93005/pagem.htm
+    published: null
+    note: 郑州工商学院教务处转载全文，非复旦官网。规定自发布之日起施行，未写明适用届次。需找到复旦官网原文替换。
+
+maintainers: [stevenchenpk]
+last_verified: 2026-10-11
+
+references:
+  standard: null
+  style: null
+  min_count: null
+  min_foreign: null
+
+format:
+  paper: null
+  margins_cm: null
+  body: null
+  headings: null
+  header_footer: null
+  page_numbering: null
+  blind_review: null
+
+ai_policy:
+  aigc_threshold_percent: null   # 该规定按用途管理，未设比例上限
+  detector: null
+  allowed:
+    # 第三条：须征得指导教师同意
+    - 文献检索与整理
+    - 图表类型推荐与制作辅助
+    - 方法不属于论文创新点时的代码与方法辅助
+    - 参考文献格式检查
+  forbidden:
+    # 第四条
+    - 研究设计与数据分析（含结论）
+    - 生成或改动原始数据
+    - 创作结果图片与重要插图
+    - 生成论文正文，以及用 AI 进行语言润色和翻译
+    - 评审专家使用 AI 评审论文
+    - 涉密内容使用任何 AI
+  disclosure: 须在本科毕业论文（设计）承诺书中明确披露：工具名称与版本、使用时间与用途、输出内容及其在论文中的位置，并保留使用 AI 前的原始材料备查（第五条）。
+  penalty: 视情节纳入考核成绩、不准答辩、取消合格成绩；构成学术不端的，取消学位申请资格或撤销学位（第七条）。

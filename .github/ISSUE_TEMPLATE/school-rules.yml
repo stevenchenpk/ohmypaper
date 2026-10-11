@@ -1,0 +1,44 @@
+name: 补充学校规则
+description: 提供你们学校的毕业论文格式要求或 AI 使用规定
+title: "[学校规则] 学校名称 · 学位 · 届次"
+labels: ["school-rules"]
+body:
+  - type: input
+    id: school
+    attributes:
+      label: 学校与院系
+      placeholder: 例如：四川大学（全校通用）
+    validations:
+      required: true
+  - type: dropdown
+    id: degree
+    attributes:
+      label: 学位
+      options: [本科, 硕士, 博士]
+    validations:
+      required: true
+  - type: input
+    id: cohort
+    attributes:
+      label: 毕业届次
+      placeholder: "2026"
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: 官方文件链接
+      description: 教务处或研究生院的通知、撰写规范 PDF。没有链接的规则无法收录。
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: 规则摘录
+      description: 尽量照抄原文，比如字体字号、页边距、页码、参考文献标准、AI 使用规定、AIGC 检测比例。
+  - type: checkboxes
+    id: maintain
+    attributes:
+      label: 维护
+      options:
+        - label: 我愿意成为本校维护人，在新规发布时帮忙更新

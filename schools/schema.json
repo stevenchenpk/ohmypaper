@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/stevenchenpk/ohmypaper/schools/schema.json",
+  "title": "ohmypaper 学校规则档案",
+  "description": "一所学校、一个学位类型、一届毕业生的论文规则。每条规则都必须能追溯到学校发布的文件。",
+  "type": "object",
+  "required": ["school", "degree", "cohort", "status", "sources", "maintainers", "last_verified"],
+  "additionalProperties": false,
+  "properties": {
+    "school": {
+      "type": "object",
+      "required": ["name", "code"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "学校全称，如 复旦大学" },
+        "code": { "type": "string", "pattern": "^[a-z0-9-]+$", "description": "目录名，小写拼音或英文缩写，如 fudan" },
+        "department": { "type": ["string", "null"], "description": "适用院系；全校通用时为 null" }
+      }
+    },
+    "degree": { "enum": ["bachelor", "master", "doctor"] },
+    "cohort": { "type": "integer", "minimum": 2020, "description": "毕业届次，如 2026" },
+    "status": {
+      "enum": ["draft", "reviewed", "outdated"],
+      "description": "draft：刚整理、未经第二人核对；reviewed：至少一名本校同学核对过；outdated：学校已发新规"
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["title", "url"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string" },
+          "url": { "type": "string", "pattern": "^https?://" },
+          "published": { "type": ["string", "null"], "description": "文件发布日期 YYYY-MM-DD" },
+          "note": { "type": ["string", "null"], "description": "如：转载页面，非学校官网" }
+        }
+      }
+    },
+    "maintainers": { "type": "array", "items": { "type": "string" }, "description": "GitHub 用户名" },
+    "last_verified": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+
+    "references": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "standard": { "enum": ["GB/T 7714-2015", "GB/T 7714-2025", "APA-7", "other", null] },
+        "style": { "enum": ["numeric", "author-year", null], "description": "顺序编码制或著者-出版年制" },
+        "min_count": { "type": ["integer", "null"], "description": "参考文献最少条数" },
+        "min_foreign": { "type": ["integer", "null"], "description": "外文文献最少条数" }
+      }
+    },
+
+    "format": {
+      "type": "object",
+      "description": "版式要求。M2 的格式体检会读取这一节；拿不准的项留 null，不要猜。",
+      "additionalProperties": false,
+      "properties": {
+        "paper": { "enum": ["A4", null] },
+        "margins_cm": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "top": { "type": "number" }, "bottom": { "type": "number" },
+            "left": { "type": "number" }, "right": { "type": "number" },
+            "gutter": { "type": "number" }
+          }
+        },
+        "body": { "$ref": "#/$defs/textStyle" },
+        "headings": {
+          "type": ["array", "null"],
+          "items": { "$ref": "#/$defs/textStyle" },
+          "description": "按级别依次为一级、二级、三级标题"
+        },
+        "header_footer": { "type": ["string", "null"], "description": "页眉页脚要求的原文摘录" },
+        "page_numbering": { "type": ["string", "null"], "description": "页码要求的原文摘录，如前置部分罗马数字、正文阿拉伯数字" },
+        "blind_review": { "type": ["string", "null"], "description": "盲审匿名化要求的原文摘录" }
+      }
+    },
+
+    "ai_policy": {
+      "type": "object",
+      "description": "学校对使用 AI 的规定。只摘录原文，不做解读。",
+      "additionalProperties": false,
+      "properties": {
+        "aigc_threshold_percent": { "type": ["number", "null"], "description": "AIGC 检测比例上限" },
+        "detector": { "type": ["string", "null"], "description": "学校指定的检测系统，如 知网、维普" },
+        "allowed": { "type": "array", "items": { "type": "string" } },
+        "forbidden": { "type": "array", "items": { "type": "string" } },
+        "disclosure": { "type": ["string", "null"], "description": "披露要求的原文摘录" },
+        "penalty": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "$defs": {
+    "textStyle": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "font_cn": { "type": "string", "description": "中文字体，如 宋体" },
+        "font_en": { "type": "string", "description": "西文字体，如 Times New Roman" },
+        "size_pt": { "type": "number", "description": "字号，单位磅。小四=12，五号=10.5" },
+        "line_spacing": { "type": "string", "description": "如 1.5 倍、固定值 20 磅" },
+        "bold": { "type": "boolean" },
+        "align": { "enum": ["left", "center", "justify"] }
+      }
+    }
+  }
+}

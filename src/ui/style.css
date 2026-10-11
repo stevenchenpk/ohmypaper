@@ -1,0 +1,141 @@
+:root {
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --text: #1f2328;
+  --muted: #5d6470;
+  --border: #e3e1da;
+  --accent: #2f5d50;
+  --verified: #1f7a4d;
+  --verified-bg: #e6f4ec;
+  --mismatch: #9a5b00;
+  --mismatch-bg: #fdf1dc;
+  --not-found: #b42318;
+  --not-found-bg: #fde8e6;
+  --manual: #3a5a8c;
+  --manual-bg: #e7eef8;
+  --error: #5d6470;
+  --error-bg: #eceef1;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a;
+    --surface: #1d2024;
+    --text: #e6e7e9;
+    --muted: #a0a6af;
+    --border: #2e3237;
+    --accent: #7fc4ac;
+    --verified: #6fd39c;
+    --verified-bg: #16301f;
+    --mismatch: #f0b65a;
+    --mismatch-bg: #362712;
+    --not-found: #f38b80;
+    --not-found-bg: #3a1c19;
+    --manual: #93b4e6;
+    --manual-bg: #1b2738;
+    --error: #a0a6af;
+    --error-bg: #26292d;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+}
+
+a { color: var(--accent); }
+
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+
+header.site { padding: 40px 0 16px; }
+header.site h1 { margin: 0; font-size: 28px; letter-spacing: -0.01em; }
+header.site h1 span { font-weight: 400; color: var(--muted); margin-left: 8px; font-size: 20px; }
+.tagline { margin: 4px 0 0; color: var(--muted); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 16px 0;
+}
+.card h2 { margin: 0 0 8px; font-size: 19px; }
+.hint { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
+
+textarea {
+  width: 100%;
+  font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, 'Noto Sans Mono CJK SC', monospace;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  resize: vertical;
+}
+
+.actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+
+button {
+  font: inherit;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--surface);
+  cursor: pointer;
+}
+button.ghost { background: transparent; color: var(--accent); }
+button:disabled { opacity: 0.5; cursor: wait; }
+
+.progress { color: var(--muted); font-size: 14px; }
+.privacy { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
+
+.summary { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 24px 0 8px; }
+.summary p { margin: 0; }
+
+.tag {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 1px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.tag.verified { color: var(--verified); background: var(--verified-bg); }
+.tag.mismatch { color: var(--mismatch); background: var(--mismatch-bg); }
+.tag.not_found { color: var(--not-found); background: var(--not-found-bg); }
+.tag.manual { color: var(--manual); background: var(--manual-bg); }
+.tag.error { color: var(--error); background: var(--error-bg); }
+
+.result {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 10px 0;
+}
+.result.verified { border-left-color: var(--verified); }
+.result.mismatch { border-left-color: var(--mismatch); }
+.result.not_found { border-left-color: var(--not-found); }
+.result.manual { border-left-color: var(--manual); }
+.result.error { border-left-color: var(--error); }
+
+.result-head { display: flex; gap: 8px; align-items: center; }
+.idx { color: var(--muted); font-size: 14px; }
+.result-body p { margin: 6px 0; }
+.raw { font-size: 14px; word-break: break-word; }
+.reason { font-size: 14px; }
+.match { font-size: 13px; color: var(--muted); }
+.links { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; }
+
+.legend ul { padding-left: 0; list-style: none; margin: 0 0 8px; }
+.legend li { margin: 8px 0; font-size: 14px; }
+.legend .tag { margin-right: 6px; }
+
+.site-footer { color: var(--muted); font-size: 13px; padding-bottom: 40px; }
