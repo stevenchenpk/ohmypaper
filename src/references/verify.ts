@@ -96,9 +96,17 @@ function titleScore(ref: ParsedReference, workTitle: string): number {
   return sim
 }
 
-/** 标题对上之后，逐项核对其余书目信息。返回给学生看的冲突说明。 */
-function conflictsOf(ref: ParsedReference, work: CandidateWork): string[] {
+interface Comparison {
+  /** 给学生看的冲突说明 */
+  conflicts: string[]
+  /** 实际比对过且一致的项，用来如实说明"核实了什么" */
+  confirmed: string[]
+}
+
+/** 标题对上之后，逐项核对其余书目信息。没法比对的项不算一致。 */
+function compare(ref: ParsedReference, work: CandidateWork): Comparison {
   const out: string[] = []
+  const confirmed: string[] = []
 
   if (ref.title && negationCount(ref.title) !== negationCount(work.title)) {
     out.push(`标题的意思相反：你写的是"${ref.title}"，记录是"${work.title}"`)
@@ -110,14 +118,16 @@ function conflictsOf(ref: ParsedReference, work: CandidateWork): string[] {
     const ok =
       mine.length === 0 ||
       theirs.some((t) => t === mine || (t.length >= 3 && mine.includes(t)) || (mine.length >= 3 && t.includes(mine)))
+    if (ok && mine.length > 0) confirmed.push('作者')
     if (!ok) {
       const shown = work.authors.slice(0, 3).join('、') + (work.authors.length > 3 ? ' 等' : '')
       out.push(`作者不符：你写的第一作者是 ${ref.authors[0]}，记录中的作者是 ${shown}`)
     }
   }
 
-  if (ref.year !== null && work.year !== null && Math.abs(ref.year - work.year) > THRESHOLDS.yearTolerance) {
-    out.push(`年份不符：你写的是 ${ref.year}，记录是 ${work.year}`)
+  if (ref.year !== null && work.year !== null) {
+    if (Math.abs(ref.year - work.year) > THRESHOLDS.yearTolerance) out.push(`年份不符：你写的是 ${ref.year}，记录是 ${work.year}`)
+    else confirmed.push('年份')
   }
 
   const kindRule = ref.docType ? KIND_CONFLICTS[ref.docType] : undefined
@@ -130,10 +140,14 @@ function conflictsOf(ref: ParsedReference, work: CandidateWork): string[] {
     out.push(`卷号不符：你写的是第 ${ref.volume} 卷，记录是第 ${work.volume} 卷${where}`)
   } else if (ref.firstPage && work.firstPage && !sameNumber(ref.firstPage, work.firstPage)) {
     out.push(`页码不符：你写的起始页是 ${ref.firstPage}，记录是 ${work.firstPage}${where}`)
+  } else if (ref.volume && work.volume) {
+    confirmed.push('卷期页码')
   }
 
-  return out
+  return { conflicts: out, confirmed }
 }
+
+const conflictsOf = (ref: ParsedReference, work: CandidateWork) => compare(ref, work).conflicts
 
 function best(ref: ParsedReference, candidates: CandidateWork[]): { work: CandidateWork; sim: number } | null {
   let top: { work: CandidateWork; sim: number; conflicts: number } | null = null
@@ -168,14 +182,29 @@ function result(
   return { ref, status, reason, match, similarity, links: linksFor(ref, match, base) }
 }
 
-function judge(ref: ParsedReference, top: { work: CandidateWork; sim: number }): VerifyResult {
+/**
+ * 判定。原则：没比对上的项不算通过。
+ * "已核实"要求标题一致，并且 DOI 指向这条记录，或者作者确实比对一致；
+ * 只有标题撞上、其余信息都没法比对时，交给人工核对。
+ */
+function judge(ref: ParsedReference, top: { work: CandidateWork; sim: number }, viaDoi = false): VerifyResult {
   const { work, sim } = top
-  const conflicts = conflictsOf(ref, work)
+  const { conflicts, confirmed } = compare(ref, work)
   if (sim >= THRESHOLDS.verified) {
     if (conflicts.length > 0) {
       return result(ref, 'mismatch', `找到了标题一致的记录，但${conflicts.join('；')}。`, work, sim)
     }
-    return result(ref, 'verified', '在开放学术库中找到标题、作者和出处都一致的记录。', work, sim)
+    const checked = [...(viaDoi ? ['DOI'] : []), '标题', ...confirmed]
+    if (!viaDoi && !confirmed.includes('作者')) {
+      return result(
+        ref,
+        'manual',
+        `找到了标题一致的记录，但没法比对作者（${ref.authors.length === 0 ? '条目里没解析出作者' : '记录里没有作者信息'}），不能确认是同一篇。请点开记录核对。`,
+        work,
+        sim,
+      )
+    }
+    return result(ref, 'verified', `在开放学术库中找到一致的记录，核对了：${checked.join('、')}。`, work, sim)
   }
   const extra = conflicts.length > 0 ? `另外，${conflicts.join('；')}。` : ''
   return result(ref, 'mismatch', `只找到标题相近、但不完全一致的记录，请核对标题是否写错。${extra}`, work, sim)
@@ -250,7 +279,7 @@ async function verifyByDoi(ref: ParsedReference, opts: SourceOptions): Promise<V
   if (sim < THRESHOLDS.related) {
     return result(ref, 'mismatch', `DOI 有效，但它指向的是另一篇文献《${work.title}》。DOI 与标题不匹配。`, work, sim)
   }
-  return judge(ref, { work, sim })
+  return judge(ref, { work, sim }, true)
 }
 
 async function verifyBySearch(ref: ParsedReference, opts: SourceOptions): Promise<VerifyResult> {

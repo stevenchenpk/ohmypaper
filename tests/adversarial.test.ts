@@ -109,3 +109,20 @@ describe('切分', () => {
     expect(refs[0].doi).toBe('10.1038/nature14539')
   })
 })
+
+describe('没比对上的项不算通过', () => {
+  it('无 DOI、只有标题撞上、记录里没有作者：需人工核对，不判已核实', async () => {
+    const db: MockWork[] = [{ doi: null, title: 'Guidance for generative AI in education and research', year: 2023, family: 'X', authors: [], type: 'report' }]
+    const [ref] = parseReferenceList('[1] UNESCO. Guidance for generative AI in education and research[R]. Paris: UNESCO, 2023.')
+    const r = await verifyReference(ref, { fetcher: mockFetcher(db) })
+    expect(r.status).toBe('manual')
+    expect(r.reason).toContain('没法比对作者')
+  })
+
+  it('已核实的说明如实列出核对过的项', async () => {
+    const [ref] = parseReferenceList('[1] LECUN Y, BENGIO Y, HINTON G. Deep learning[J]. Nature, 2015, 521(7553): 436–444. DOI:10.1038/nature14539.')
+    const r = await verifyReference(ref, { fetcher: mockFetcher(DB) })
+    expect(r.status).toBe('verified')
+    expect(r.reason).toContain('DOI、标题、作者、年份、卷期页码')
+  })
+})
