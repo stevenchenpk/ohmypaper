@@ -6,12 +6,14 @@
 
 import type { Paragraph } from '../docx'
 import { parseReference } from '../../references/parse'
-import { type Edition, RULES, checkEntry } from '../../references/style/gbt7714'
+import { type Edition, RULES, analyzeEntry, checkEntry } from '../../references/style/gbt7714'
 import type { SchoolProfile } from '../profile'
 import { locate, norm } from '../structure'
-import type { CheckContext } from './context'
+import { type CheckContext, unknownNote } from './context'
 import { checkTextStyle } from './textStyle'
 
+/** 依赖作者段的规则：作者段拆不出来时无法判断 */
+const AUTHOR_RULES = new Set(['surname-case', 'author-limit', 'etal-language'])
 const MANUAL_NO = /^\s*[[［]\s*(\d+)\s*[\]］]\s*/
 const DOTTED_NO = /^\s*(\d+)\s*[.．、]\s*/
 /** 正文里的 [1]、[2-5]、[1,3]、［6］ */
@@ -103,27 +105,43 @@ export function checkReferences(ctx: CheckContext) {
   }
 
   // 逐条著录规则（GB/T 7714 两版规则表）
-  const byRule = new Map<string, { paras: Paragraph[]; messages: string[]; severity: 'error' | 'warning' | 'info' }>()
-  entries.forEach((p, i) => {
-    for (const issue of checkEntry(referenceText(p), i + 1, { edition })) {
-      const g = byRule.get(issue.ruleId) ?? { paras: [], messages: [], severity: issue.severity }
-      g.paras.push(p)
-      g.messages.push(issue.message)
-      byRule.set(issue.ruleId, g)
-    }
-  })
+  // 识别不出文献类型的条目，只适用于某几类文献的规则无法判断；作者段拆不出来的，作者规则无法判断。
+  // 这两种都记"无法判断"，不能算通过。
+  const views = entries.map((p) => analyzeEntry(referenceText(p)))
+  const issuesOf = entries.map((p, i) => checkEntry(referenceText(p), i + 1, { edition }))
   for (const rule of RULES) {
     if (!rule.severity[edition]) continue
-    const g = byRule.get(rule.id)
-    if (!g) {
-      ctx.pass('references', rule.title)
+    const bad: Paragraph[] = []
+    const messages: string[] = []
+    let ok = 0, unknown = 0
+    let severity: 'error' | 'warning' | 'info' = rule.severity[edition]!
+    entries.forEach((p, i) => {
+      const v = views[i]
+      if (rule.appliesTo !== 'all') {
+        if (v.type === null) return void unknown++
+        if (!rule.appliesTo.includes(v.type)) return // 不适用
+      }
+      if (AUTHOR_RULES.has(rule.id) && v.authorSegment === null) return void unknown++
+      const hit = issuesOf[i].find((x) => x.ruleId === rule.id)
+      if (hit) {
+        bad.push(p)
+        messages.push(hit.message)
+        severity = hit.severity
+      } else ok++
+    })
+    if (bad.length === 0) {
+      if (ok + unknown > 0) ctx.settle('references', rule.title, ok, unknown, '条')
       continue
     }
     const clause = rule.clause[edition]
-    ctx.addForParagraphs(g.paras, {
-      id: `refs-${rule.id}`, category: 'references', severity: g.severity,
-      title: `${rule.title}（${g.paras.length} 条）`,
-      detail: [...new Set(g.messages)].slice(0, 2).join(' ') + (rule.falsePositiveRisk !== 'low' && rule.falsePositiveNote ? ` 注意：${rule.falsePositiveNote}` : ''),
+    ctx.addForParagraphs(bad, {
+      id: `refs-${rule.id}`, category: 'references', severity,
+      title: `${rule.title}（${bad.length} 条）`,
+      detail: [
+        [...new Set(messages)].slice(0, 2).join(' '),
+        rule.falsePositiveRisk !== 'low' && rule.falsePositiveNote ? `注意：${rule.falsePositiveNote}` : '',
+        unknownNote(unknown, '条'),
+      ].filter(Boolean).join(' '),
       basis: `${basis}${clause ? ` ${clause}` : ''}`,
     })
   }

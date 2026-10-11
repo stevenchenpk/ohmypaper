@@ -44,6 +44,24 @@ export class CheckContext {
   skip(category: Category, item: string, reason: string) {
     this.skipped.push({ category, item, reason })
   }
+
+  /**
+   * 没发现问题时的收尾。无法判断的不能算通过：
+   * 全部无法判断 → 未检查；部分无法判断 → 判断得了的记通过，其余另记未检查。
+   */
+  settle(category: Category, item: string, checked: number, unknown: number, unit = '处') {
+    if (checked === 0) {
+      this.skip(category, item, unknown ? `${unknown} ${unit}无法从文件中读出，需人工确认` : '文档中没有可检查的内容')
+      return
+    }
+    this.pass(category, item)
+    if (unknown) this.skip(category, item, `另有 ${unknown} ${unit}无法从文件中读出，需人工确认`)
+  }
+}
+
+/** 发现问题时附在说明后面：还有多少无法判断 */
+export function unknownNote(unknown: number, unit = '处'): string {
+  return unknown ? `另有 ${unknown} ${unit}无法从文件中读出，未计入，需人工确认。` : ''
 }
 
 /** 统计出现最多的几个实际值，如 "等线（37 段）、宋体（2 段）" */

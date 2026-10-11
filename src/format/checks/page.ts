@@ -4,7 +4,7 @@ import type { PageNumberFormat, Section } from '../docx'
 import { round } from '../profile'
 import type { Location } from '../report'
 import { excerpt, norm } from '../structure'
-import type { CheckContext } from './context'
+import { type CheckContext, unknownNote } from './context'
 
 const FMT_LABEL: Record<PageNumberFormat | 'none', string> = {
   arabic: '阿拉伯数字（1, 2, 3）',
@@ -34,9 +34,10 @@ export function checkPage(ctx: CheckContext) {
 
   // 纸张
   if (fmt?.paper === 'A4') {
-    const bad = sections.filter((s) => {
-      if (s.pageWidthCm === null || s.pageHeightCm === null) return false
-      const [w, h] = [s.pageWidthCm, s.pageHeightCm].sort((a, b) => a - b) // 横向页也算 A4
+    const readable = sections.filter((s) => s.pageWidthCm !== null && s.pageHeightCm !== null)
+    const unknown = sections.length - readable.length
+    const bad = readable.filter((s) => {
+      const [w, h] = [s.pageWidthCm!, s.pageHeightCm!].sort((a, b) => a - b) // 横向页也算 A4
       return Math.abs(w - 21) > 0.1 || Math.abs(h - 29.7) > 0.1
     })
     if (bad.length) {
@@ -44,20 +45,34 @@ export function checkPage(ctx: CheckContext) {
         id: 'page-paper', category: 'page', severity: 'error', title: '纸张不是 A4',
         expected: 'A4（21 × 29.7 厘米）',
         actual: bad.map((s) => `${round(s.pageWidthCm!)} × ${round(s.pageHeightCm!)} 厘米`).join('；'),
+        detail: unknownNote(unknown, '节') || undefined,
         locations: bad.map((s) => sectionLocation(ctx, s)), basis: ctx.schoolBasis,
       })
-    } else ctx.pass('page', '纸张大小')
+    } else ctx.settle('page', '纸张大小', readable.length, unknown, '节')
   } else ctx.skip('page', '纸张大小', '学校档案未规定')
 
   // 页边距
   const want = fmt?.margins_cm
   if (want) {
-    const keys = (Object.keys(MARGIN_LABEL) as (keyof typeof MARGIN_LABEL)[]).filter((k) => want[k] !== undefined)
+    const keys = (Object.keys(MARGIN_LABEL) as (keyof typeof MARGIN_LABEL)[]).filter((k) => want[k] != null)
     const bad: { s: Section; diffs: string[] }[] = []
+    let readable = 0, unknown = 0
     for (const s of sections) {
-      if (!s.margins) continue
-      const diffs = keys.filter((k) => Math.abs(s.margins![k] - want[k]!) > 0.05).map((k) => `${MARGIN_LABEL[k]} ${round(s.margins![k])}`)
-      if (diffs.length) bad.push({ s, diffs })
+      const m = s.margins
+      if (!m || keys.some((k) => m[k] === null)) {
+        unknown++
+        continue
+      }
+      readable++
+      const diffsFor = (w: typeof want) => keys.filter((k) => Math.abs(m[k]! - w[k]!) > 0.05)
+      let diffs = diffsFor(want)
+      // 横向页：Word 切换方向时会把四边边距一起转 90°，两个方向都接受
+      if (diffs.length && s.pageWidthCm !== null && s.pageHeightCm !== null && s.pageWidthCm > s.pageHeightCm) {
+        const cw = { ...want, top: want.left, right: want.top, bottom: want.right, left: want.bottom }
+        const ccw = { ...want, top: want.right, right: want.bottom, bottom: want.left, left: want.top }
+        if (diffsFor(cw).length === 0 || diffsFor(ccw).length === 0) diffs = []
+      }
+      if (diffs.length) bad.push({ s, diffs: diffs.map((k) => `${MARGIN_LABEL[k]} ${round(m[k]!)}`) })
     }
     if (bad.length) {
       ctx.add({
@@ -65,10 +80,10 @@ export function checkPage(ctx: CheckContext) {
         title: `页边距不符合要求（${bad.length} / ${sections.length} 节）`,
         expected: keys.map((k) => `${MARGIN_LABEL[k]} ${want[k]}`).join('，') + '（厘米）',
         actual: bad.map((b) => `第 ${b.s.index + 1} 节：${b.diffs.join('，')}`).join('；'),
-        detail: sections.some((s) => s.mirrorMargins) ? '文档开启了"对称页边距"，左右边距分别指内侧和外侧。' : undefined,
+        detail: [sections.some((s) => s.mirrorMargins) ? '文档开启了"对称页边距"，左右边距分别指内侧和外侧。' : '', unknownNote(unknown, '节')].join('') || undefined,
         locations: bad.map((b) => sectionLocation(ctx, b.s)), basis: ctx.schoolBasis,
       })
-    } else ctx.pass('page', '页边距')
+    } else ctx.settle('page', '页边距', readable, unknown, '节')
   } else ctx.skip('page', '页边距', '学校档案未规定')
 
   checkHeader(ctx)
@@ -85,7 +100,7 @@ function bodySections(ctx: CheckContext): Section[] {
 
 function checkHeader(ctx: CheckContext) {
   const rule = ctx.profile?.format?.header
-  if (!rule || (rule.required === undefined && !rule.text)) {
+  if (!rule || (rule.required == null && !rule.text)) {
     ctx.skip('page_numbers', '页眉', '学校档案未规定')
     return
   }
@@ -95,7 +110,8 @@ function checkHeader(ctx: CheckContext) {
     return
   }
   const missing = secs.filter((s) => !s.header?.text.replace(/\s+/g, ''))
-  if (rule.required && missing.length) {
+  // 规定了页眉文字，就等于要求有页眉
+  if ((rule.required || rule.text) && missing.length) {
     ctx.add({
       id: 'header-missing', category: 'page_numbers', severity: 'error', title: '正文没有页眉',
       expected: rule.text ? `页眉"${rule.text}"` : '有页眉',

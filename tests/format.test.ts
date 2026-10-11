@@ -143,3 +143,28 @@ describe('档案写法换算', () => {
     expect(headingNumber('2023年政策回顾')).toBeNull()
   })
 })
+
+describe('压测样例：更贴近真实的合格论文不误报', () => {
+  // 由 tests/fixtures/make_stress_samples.py 生成
+  const stress = (f: string) => new Uint8Array(readFileSync(join(fixtures, 'stress', f)))
+  it.each(['toc-field.docx', 'landscape.docx', 'captions.docx', 'mixed-numbering.docx', 'wps-like.docx'])('%s', (f) => {
+    expect(serious(checkDocx(stress(f), profile)).map((i) => i.id)).toEqual([])
+  })
+
+  it('LibreOffice 转存后题注编号确实被改乱，只报这两项', () => {
+    // LibreOffice 不认 SEQ 域的 \s 1（按章重新编号），转存时把编号改成了全文连续
+    const found = serious(checkDocx(stress('captions-libreoffice.docx'), profile)).map((i) => i.id).sort()
+    expect(found).toEqual(['captions-sequence-figure', 'captions-sequence-table'])
+  })
+
+  it('目录域能识别，目录和标题一致时记为通过', () => {
+    expect(checkDocx(stress('toc-field.docx'), profile).passed.map((p) => p.item)).toContain('目录与标题一致')
+  })
+
+  it('WPS 把页码放在页脚文本框里，按文本框内段落的对齐判断', () => {
+    const doc = parseDocx(stress('wps-like.docx'))
+    const body = doc.sections[doc.sections.length - 1]
+    expect(body.footer?.hasPageField).toBe(true)
+    expect(body.footer?.pageFieldAlign).toBe('center')
+  })
+})

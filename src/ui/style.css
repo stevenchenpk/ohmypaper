@@ -177,3 +177,5 @@ h3.cat { font-size: 16px; margin: 20px 0 4px; }
 details.notes { margin: 12px 0; font-size: 14px; }
 details.notes summary { cursor: pointer; color: var(--muted); }
 details.notes ul { margin: 6px 0; padding-left: 20px; }
+.tag.manual-check { color: var(--error); background: var(--error-bg); }
+ul.skipped { margin: 6px 0; padding-left: 20px; font-size: 14px; }

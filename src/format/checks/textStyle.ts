@@ -17,7 +17,7 @@ import {
   sameLineSpacing,
 } from '../profile'
 import type { Category } from '../report'
-import { type CheckContext, topValues } from './context'
+import { type CheckContext, topValues, unknownNote } from './context'
 
 const CJK = /[㐀-鿿豈-﫿]/g
 const LATIN = /[A-Za-z0-9]/g
@@ -43,21 +43,30 @@ interface Target {
   rule: TextStyleRule
 }
 
-/** 某个属性的逐段比较：返回实际值描述，符合要求时返回 null */
-type Probe = (p: Paragraph) => string | null
+/** 文件里读不出这个属性（各层格式都没写），不能当作符合要求 */
+const UNKNOWN = Symbol('unknown')
+/** 这一段不适用，如没有西文字符的段落不查西文字体 */
+const NA = Symbol('na')
+type Verdict = string | null | typeof UNKNOWN | typeof NA
+
+/** 某个属性的逐段比较：返回实际值描述；符合要求返回 null */
+type Probe = (p: Paragraph) => Verdict
 
 export function checkTextStyle(ctx: CheckContext, t: Target) {
   const { rule, paragraphs } = t
   const basis = ctx.schoolBasis
   if (paragraphs.length === 0) return
 
-  const runProbe = (pick: (r: Run) => boolean, test: (r: Run) => string | null): Probe => (p) => {
+  const runProbe = (pick: (r: Run) => boolean, test: (r: Run) => string | null | typeof UNKNOWN): Probe => (p) => {
+    let relevant = false, unknown = false
     for (const r of p.runs) {
       if (r.superscript || !pick(r)) continue
-      const bad = test(r)
-      if (bad) return bad
+      relevant = true
+      const v = test(r)
+      if (v === UNKNOWN) unknown = true
+      else if (v) return v
     }
-    return null
+    return !relevant ? NA : unknown ? UNKNOWN : null
   }
 
   const items: { key: string; name: string; expected: string; probe: Probe }[] = []
@@ -66,21 +75,21 @@ export function checkTextStyle(ctx: CheckContext, t: Target) {
     const want = rule.font_cn
     items.push({
       key: 'font-cn', name: '中文字体', expected: want,
-      probe: runProbe((r) => count(r.text, CJK) >= 1, (r) => (r.fontCn && !sameFont(r.fontCn, want) ? canonicalFont(r.fontCn) : null)),
+      probe: runProbe((r) => count(r.text, CJK) >= 1, (r) => (r.fontCn === null ? UNKNOWN : !sameFont(r.fontCn, want) ? canonicalFont(r.fontCn) : null)),
     })
   }
   if (rule.font_en) {
     const want = rule.font_en
     items.push({
       key: 'font-en', name: '西文字体', expected: want,
-      probe: runProbe((r) => count(r.text, LATIN) >= 2, (r) => (r.fontEn && !sameFont(r.fontEn, want) ? canonicalFont(r.fontEn) : null)),
+      probe: runProbe((r) => count(r.text, LATIN) >= 2, (r) => (r.fontEn === null ? UNKNOWN : !sameFont(r.fontEn, want) ? canonicalFont(r.fontEn) : null)),
     })
   }
   if (rule.size_pt) {
     const want = rule.size_pt
     items.push({
       key: 'size', name: '字号', expected: describeSize(want),
-      probe: runProbe((r) => r.text.trim().length >= 2, (r) => (r.sizePt !== null && Math.abs(r.sizePt - want) > 0.25 ? describeSize(r.sizePt) : null)),
+      probe: runProbe((r) => r.text.trim().length >= 2, (r) => (r.sizePt === null ? UNKNOWN : Math.abs(r.sizePt - want) > 0.25 ? describeSize(r.sizePt) : null)),
     })
   }
   if (rule.bold != null) {
@@ -90,7 +99,8 @@ export function checkTextStyle(ctx: CheckContext, t: Target) {
       probe: (p) => {
         const total = p.runs.reduce((n, r) => n + r.text.trim().length, 0)
         const bold = p.runs.filter((r) => r.bold).reduce((n, r) => n + r.text.trim().length, 0)
-        const isBold = total > 0 && bold / total > 0.5
+        if (total === 0) return NA
+        const isBold = bold / total > 0.5
         return isBold === want ? null : isBold ? '加粗' : '不加粗'
       },
     })
@@ -117,13 +127,13 @@ export function checkTextStyle(ctx: CheckContext, t: Target) {
     items.push({
       key: 'indent', name: '首行缩进', expected: want === 0 ? '无缩进' : `${want} 字符`,
       probe: (p) => {
-        if (p.numbered) return null // 列表项的缩进由编号决定
+        if (p.numbered) return NA // 列表项的缩进由编号决定
         let chars: number
         if (p.firstLineChars !== null) chars = p.firstLineChars
         else if (p.firstLinePt !== null) chars = p.firstLinePt / (dominantSize(p) ?? 12)
         else chars = 0
         // 用空格代替缩进
-        if (chars < 0.2 && /^[\s　]{2,}/.test(p.text)) return '用空格缩进'
+        if (chars < 0.2 && /^[ \u3000]{2,}/.test(p.text)) return '用空格缩进'
         return Math.abs(chars - want) <= 0.25 ? null : chars === 0 ? '无缩进' : `${round(chars)} 字符`
       },
     })
@@ -154,25 +164,30 @@ export function checkTextStyle(ctx: CheckContext, t: Target) {
   for (const item of items) {
     const bad: Paragraph[] = []
     const actual: string[] = []
+    let ok = 0, unknown = 0
     for (const p of paragraphs) {
       const v = item.probe(p)
-      if (v) {
+      if (v === NA) continue
+      if (v === UNKNOWN) unknown++
+      else if (v === null) ok++
+      else {
         bad.push(p)
         actual.push(v)
       }
     }
     const what = `${t.label}${item.name}`
     if (bad.length === 0) {
-      ctx.pass(t.category, what)
+      ctx.settle(t.category, what, ok, unknown, '段')
       continue
     }
     ctx.addForParagraphs(bad, {
       id: `${t.id}-${item.key}`,
       category: t.category,
       severity: 'error',
-      title: `${what}不符合要求（${bad.length} / ${paragraphs.length} 段）`,
+      title: `${what}不符合要求（${bad.length} / ${bad.length + ok + unknown} 段）`,
       expected: item.expected,
       actual: topValues(actual),
+      detail: unknownNote(unknown, '段') || undefined,
       basis,
     })
   }

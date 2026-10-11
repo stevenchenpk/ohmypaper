@@ -2,21 +2,23 @@
 
 export type Severity = 'error' | 'warning' | 'info'
 
-export type Category = 'page' | 'body' | 'headings' | 'page_numbers' | 'references' | 'cleanup'
+export type Category = 'page' | 'body' | 'headings' | 'figures' | 'page_numbers' | 'references' | 'cleanup'
 
 export const CATEGORY_LABEL: Record<Category, string> = {
   page: '页面设置',
   body: '正文版式',
-  headings: '标题层级',
+  headings: '标题与目录',
+  figures: '图表题注',
   page_numbers: '页眉页码',
   references: '参考文献',
   cleanup: '提交前清理',
 }
 
 export const SEVERITY_LABEL: Record<Severity, string> = {
-  error: '不符合要求',
-  warning: '可能有问题',
-  info: '建议核对',
+  // 三层措辞：与所选规则不符 / 检测到（问题或待核对项）/ 未检查，需人工确认（见 Report.skipped）
+  error: '与所选规则不符',
+  warning: '检测到问题',
+  info: '检测到，请核对',
 }
 
 export interface Location {

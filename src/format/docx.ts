@@ -12,6 +12,7 @@ import { DOMParser } from '@xmldom/xmldom'
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 const A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
 const R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+const M = 'http://schemas.openxmlformats.org/officeDocument/2006/math'
 const DC = 'http://purl.org/dc/elements/1.1/'
 const CP = 'http://schemas.openxmlformats.org/package/2006/metadata/core-properties'
 
@@ -57,6 +58,8 @@ export interface Paragraph {
   spaceBefore: { lines: number | null; pt: number }
   spaceAfter: { lines: number | null; pt: number }
   runs: Run[]
+  /** 含 Office 公式（m:oMath）；公式里的字不在 text 里 */
+  hasMath: boolean
 }
 
 export interface HeaderFooter {
@@ -74,7 +77,8 @@ export interface Section {
   lastParagraph: number
   pageWidthCm: number | null
   pageHeightCm: number | null
-  margins: { top: number; bottom: number; left: number; right: number; gutter: number } | null
+  /** 单位厘米；文件里没写的边距为 null（装订线没写按 0） */
+  margins: { top: number | null; bottom: number | null; left: number | null; right: number | null; gutter: number } | null
   pageNumberFormat: PageNumberFormat
   pageNumberStart: number | null
   titlePage: boolean
@@ -373,10 +377,12 @@ function readHeaderFooter(doc: Document): HeaderFooter {
   let pageFieldAlign: Align | null = null
   const texts: string[] = []
   for (const p of paras) {
-    texts.push(descendants(p, 't').map((t) => t.textContent ?? '').join(''))
+    // 只算直属于这一段的文字和域：文本框的锚点段落里嵌着另一个段落，不能把里面的页码算到外层
+    const own = (el: El) => closestParagraph(el) === p
+    texts.push(descendants(p, 't').filter(own).map((t) => t.textContent ?? '').join(''))
     const instr = [
-      ...descendants(p, 'instrText').map((t) => t.textContent ?? ''),
-      ...descendants(p, 'fldSimple').map((f) => attr(f, 'instr') ?? ''),
+      ...descendants(p, 'instrText').filter(own).map((t) => t.textContent ?? ''),
+      ...descendants(p, 'fldSimple').filter(own).map((f) => attr(f, 'instr') ?? ''),
     ].join(' ')
     if (/\bPAGE\b/.test(instr) && !hasPageField) {
       hasPageField = true
@@ -386,6 +392,13 @@ function readHeaderFooter(doc: Document): HeaderFooter {
   // 页码放在文本框里的情况
   if (!hasPageField && /\bPAGE\b/.test(descendants(doc, 'instrText').map((t) => t.textContent).join(' '))) hasPageField = true
   return { text: texts.join('\n').trim(), hasPageField, pageFieldAlign }
+}
+
+function closestParagraph(el: El): El | null {
+  for (let n = el.parentNode as El | null; n; n = n.parentNode as El | null) {
+    if (n.localName === 'p' && n.namespaceURI === W) return n
+  }
+  return null
 }
 
 function normalizeAlign(jc: string | null | undefined): Align {
@@ -408,7 +421,8 @@ function normalizeAlign(jc: string | null | undefined): Align {
 export function parseDocx(data: Uint8Array): DocxModel {
   let files: Record<string, Uint8Array>
   try {
-    files = unzipSync(data)
+    // 只解压 XML 和关系表，图片等媒体文件用不到
+    files = unzipSync(data, { filter: (f) => /\.(xml|rels)$/.test(f.name) })
   } catch {
     throw new DocxError('文件无法解压。请确认是 .docx 格式（不是 .doc 或 WPS 的 .wps），可以在 Word 或 WPS 里"另存为 docx"后再试。')
   }
@@ -451,7 +465,10 @@ export function parseDocx(data: Uint8Array): DocxModel {
   const closeSection = (sectPr: El | null) => {
     const index = sections.length
     const pgSz = child(sectPr, 'pgSz'), pgMar = child(sectPr, 'pgMar'), pgNum = child(sectPr, 'pgNumType')
-    const mar = (k: string) => (num(attr(pgMar, k)) ?? 0) / TWIP_PER_CM
+    const mar = (k: string) => {
+      const v = num(attr(pgMar, k))
+      return v === null ? null : v / TWIP_PER_CM
+    }
     const fmt = attr(pgNum, 'fmt')
     // 页眉页脚没写就沿用上一节（Word 的"链接到前一节"）
     const refs: Record<string, string> = {}
@@ -465,7 +482,7 @@ export function parseDocx(data: Uint8Array): DocxModel {
       lastParagraph: paragraphs.length - 1,
       pageWidthCm: pgSz ? (num(attr(pgSz, 'w')) ?? 0) / TWIP_PER_CM : null,
       pageHeightCm: pgSz ? (num(attr(pgSz, 'h')) ?? 0) / TWIP_PER_CM : null,
-      margins: pgMar ? { top: mar('top'), bottom: mar('bottom'), left: mar('left'), right: mar('right'), gutter: mar('gutter') } : null,
+      margins: pgMar ? { top: mar('top'), bottom: mar('bottom'), left: mar('left'), right: mar('right'), gutter: mar('gutter') ?? 0 } : null,
       pageNumberFormat: !fmt || fmt === 'decimal' ? 'arabic' : fmt === 'lowerRoman' ? 'lower_roman' : fmt === 'upperRoman' ? 'upper_roman' : 'other',
       pageNumberStart: num(attr(pgNum, 'start')),
       titlePage: toggle(child(sectPr, 'titlePg')) === true,
@@ -506,7 +523,7 @@ export function parseDocx(data: Uint8Array): DocxModel {
         text,
         fontEn: resolveFont(rp.ascii, theme),
         fontCn: resolveFont(rp.eastAsia, theme),
-        sizePt: rp.sizeHalfPt !== undefined ? rp.sizeHalfPt / 2 : 10.5, // Word 未设置时默认五号
+        sizePt: rp.sizeHalfPt !== undefined ? rp.sizeHalfPt / 2 : null, // 各层都没写字号时无法确定
         bold: rp.bold === true,
         superscript: rp.vertAlign === 'superscript',
       })
@@ -541,6 +558,7 @@ export function parseDocx(data: Uint8Array): DocxModel {
       spaceBefore: { lines: pp.beforeLines !== undefined ? pp.beforeLines / 100 : null, pt: (pp.before ?? 0) / 20 },
       spaceAfter: { lines: pp.afterLines !== undefined ? pp.afterLines / 100 : null, pt: (pp.after ?? 0) / 20 },
       runs,
+      hasMath: descendants(p, 'oMath', M).length > 0 || descendants(p, 'oMathPara', M).length > 0,
     })
 
     const sectPr = child(pPr, 'sectPr')

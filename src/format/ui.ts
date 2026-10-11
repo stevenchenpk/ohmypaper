@@ -4,6 +4,7 @@
 import { parse } from 'yaml'
 import { DocxError } from './docx'
 import { checkDocx } from './engine'
+import type { WorkerRequest, WorkerResponse } from './worker'
 import { type SchoolProfile, profileLabel } from './profile'
 import { CATEGORY_LABEL, type Category, type Issue, type Report, SEVERITY_LABEL, type Severity } from './report'
 
@@ -56,9 +57,10 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
     el('p', {}, r.profileLabel ? `按 ${r.profileLabel} 的要求检查：` : '通用检查（未选学校）：'),
     ...(['error', 'warning', 'info'] as Severity[]).filter((s) => counts[s]).map((s) => el('span', { className: `tag sev-${s}` }, `${SEVERITY_LABEL[s]} ${counts[s]}`)),
     el('span', { className: 'tag verified' }, `通过 ${r.passed.length}`),
+    el('span', { className: 'tag manual-check' }, `未检查，需人工确认 ${r.skipped.length}`),
   )
   const nodes: Node[] = [summary]
-  if (r.issues.length === 0) nodes.push(el('p', { className: 'hint' }, '没有发现问题。工具只能检查能自动判断的项，提交前仍请对照学校规范通读一遍。'))
+  if (r.issues.length === 0) nodes.push(el('p', { className: 'hint' }, '没有检测到问题。工具只能判断能自动检查的项，提交前仍请对照学校规范通读一遍。'))
 
   const cats = Object.keys(CATEGORY_LABEL) as Category[]
   for (const c of cats) {
@@ -72,8 +74,15 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
     d.append(el('ul', {}, ...items.map((t) => el('li', {}, t))))
     return d
   }
-  if (r.passed.length) nodes.push(details(`已通过的 ${r.passed.length} 项`, r.passed.map((p) => `${CATEGORY_LABEL[p.category]} · ${p.item}`)))
-  if (r.skipped.length) nodes.push(details(`没有检查的 ${r.skipped.length} 项`, r.skipped.map((p) => `${CATEGORY_LABEL[p.category]} · ${p.item}：${p.reason}`)))
+  // 未检查的项和问题一样重要，直接展开；通过的项折叠
+  if (r.skipped.length) {
+    nodes.push(
+      el('h3', { className: 'cat' }, `未检查，需人工确认（${r.skipped.length}）`),
+      el('p', { className: 'hint' }, '下面这些项工具没有判断，不代表符合要求，请对照学校规范自己看一遍。'),
+      el('ul', { className: 'skipped' }, ...r.skipped.map((p) => el('li', {}, `${CATEGORY_LABEL[p.category]} · ${p.item}：${p.reason}`))),
+    )
+  }
+  if (r.passed.length) nodes.push(details(`通过的 ${r.passed.length} 项`, r.passed.map((p) => `${CATEGORY_LABEL[p.category]} · ${p.item}`)))
 
   if (r.references.length) {
     const btn = el('button', { type: 'button', className: 'ghost' }, `把抽出的 ${r.references.length} 条参考文献送去核验真伪`)
@@ -81,6 +90,36 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
     nodes.push(el('div', { className: 'actions' }, btn))
   }
   out.replaceChildren(...nodes)
+}
+
+/** 优先在 Web Worker 里检查；浏览器不支持时退回主线程 */
+function runCheck(data: Uint8Array, profile: SchoolProfile | null): Promise<Report> {
+  if (typeof Worker === 'undefined') return Promise.resolve(checkDocx(data, profile))
+  return new Promise((resolve, reject) => {
+    let worker: Worker
+    try {
+      worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' })
+    } catch {
+      resolve(checkDocx(data, profile))
+      return
+    }
+    worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
+      worker.terminate()
+      if (e.data.ok) resolve(e.data.report)
+      else reject(e.data.readable ? new DocxError(e.data.message) : new Error(e.data.message))
+    }
+    worker.onerror = () => {
+      // 例如以 file:// 打开离线页时不允许启动 Worker
+      worker.terminate()
+      try {
+        resolve(checkDocx(data, profile))
+      } catch (err) {
+        reject(err)
+      }
+    }
+    // 不转移所有权：Worker 启动失败时主线程还要用这份数据
+    worker.postMessage({ data, profile } satisfies WorkerRequest)
+  })
 }
 
 export function mountFormatCheck(opts: { onReferences: (refs: string[]) => void }) {
@@ -116,8 +155,7 @@ export function mountFormatCheck(opts: { onReferences: (refs: string[]) => void 
     status.textContent = `正在检查 ${f.name}…`
     out.replaceChildren()
     try {
-      const data = new Uint8Array(await f.arrayBuffer())
-      const report = checkDocx(data, current()?.profile ?? null)
+      const report = await runCheck(new Uint8Array(await f.arrayBuffer()), current()?.profile ?? null)
       renderReport(report, out, opts.onReferences)
       status.textContent = `检查完成：${f.name}`
     } catch (e) {
