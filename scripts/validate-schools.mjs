@@ -3,6 +3,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import Ajv from 'ajv/dist/2020.js'
 import { parse } from 'yaml'
+import { crossCheck } from './school-crosscheck.mjs'
 
 const root = new URL('../schools/', import.meta.url).pathname
 const schema = JSON.parse(readFileSync(join(root, 'schema.json'), 'utf8'))
@@ -17,6 +18,7 @@ for (const dir of readdirSync(root)) {
     const rel = `schools/${dir}/${file}`
     const problems = []
     if (!validate(data)) problems.push(...validate.errors.map((e) => `${e.instancePath || '/'} ${e.message}`))
+    problems.push(...crossCheck(data))
     if (dir !== '_template' && data?.school?.code !== dir) problems.push(`school.code 应与目录名 ${dir} 一致`)
     if (problems.length) {
       failed++
