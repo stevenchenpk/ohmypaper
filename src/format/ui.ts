@@ -28,7 +28,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, props: Partial<HTMLEl
 }
 
 function renderIssue(i: Issue, hasProfile: boolean): HTMLElement {
-  const body = el('div', { className: 'result-body' })
+  const body = el('div', { className: 'row-main' }, el('p', { className: 'raw' }, el('b', {}, i.title)))
   if (i.expected || i.actual) {
     body.append(el('p', { className: 'reason' },
       ...(i.expected ? [el('b', {}, '要求：'), i.expected, '　'] : []),
@@ -43,8 +43,8 @@ function renderIssue(i: Issue, hasProfile: boolean): HTMLElement {
     body.append(list)
   }
   body.append(el('p', { className: 'match' }, `依据：${i.basis}`))
-  return el('article', { className: `result sev-${i.severity}` },
-    el('div', { className: 'result-head' }, el('span', { className: `tag sev-${i.severity}` }, severityLabel(i.severity, hasProfile)), el('b', {}, i.title)),
+  return el('article', { className: `row sev-${i.severity}` },
+    el('div', { className: 'row-side' }, el('span', { className: `st sev-${i.severity}` }, severityLabel(i.severity, hasProfile))),
     body,
   )
 }
@@ -53,20 +53,27 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
   const counts: Record<Severity, number> = { error: 0, warning: 0, info: 0 }
   for (const i of r.issues) counts[i.severity]++
 
-  const summary = el('div', { className: 'summary' },
-    el('p', {}, r.profileLabel ? `按 ${r.profileLabel} 的要求检查：` : '通用检查（未选学校）：'),
-    ...(['error', 'warning', 'info'] as Severity[]).filter((s) => counts[s]).map((s) => el('span', { className: `tag sev-${s}` }, `${severityLabel(s, r.profileLabel !== null)} ${counts[s]}`)),
-    el('span', { className: 'tag verified' }, `通过 ${r.passed.length}`),
-    el('span', { className: 'tag manual-check' }, `未检查，需人工确认 ${r.skipped.length}`),
+  const hasProfile = r.profileLabel !== null
+  const cell = (cls: string, label: string, n: number, note: string) =>
+    el('div', { className: `t ${cls}` }, el('div', { className: 'k' }, label), el('div', { className: 'v' }, String(n)), el('div', { className: 'd' }, note))
+  // 四格并排：不符、检测到、未检查、通过。未检查和通过同样醒目
+  const summary = el('div', {},
+    el('p', { className: 'scope mono' }, r.profileLabel ? `按 ${r.profileLabel} 的要求检查` : '通用检查（未选学校）'),
+    el('div', { className: 'tally four' },
+      cell('t-bad', severityLabel('error', hasProfile), counts.error, '需要修改'),
+      cell('t-warn', '检测到，请核对', counts.warning + counts.info, '可能有问题，请对照规范看'),
+      cell('t-open', '未检查，需人工确认', r.skipped.length, '工具没有判断，不算通过'),
+      cell('t-ok', '通过', r.passed.length, '能自动检查的项'),
+    ),
   )
   const nodes: Node[] = [summary]
-  if (r.issues.length === 0) nodes.push(el('p', { className: 'hint' }, '没有检测到问题。工具只能判断能自动检查的项，提交前仍请对照学校规范通读一遍。'))
+  if (r.issues.length === 0) nodes.push(el('p', { className: 'note' }, '没有检测到问题。工具只能判断能自动检查的项，提交前仍请对照学校规范通读一遍。'))
 
   const cats = Object.keys(CATEGORY_LABEL) as Category[]
   for (const c of cats) {
     const list = r.issues.filter((i) => i.category === c)
     if (list.length === 0) continue
-    nodes.push(el('h3', { className: 'cat' }, `${CATEGORY_LABEL[c]}（${list.length}）`), ...list.map((i) => renderIssue(i, r.profileLabel !== null)))
+    nodes.push(el('h3', { className: 'cat' }, `${CATEGORY_LABEL[c]}（${list.length}）`), el('div', { className: 'rows' }, ...list.map((i) => renderIssue(i, hasProfile))))
   }
 
   const details = (title: string, items: string[]) => {
@@ -78,14 +85,14 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
   if (r.skipped.length) {
     nodes.push(
       el('h3', { className: 'cat' }, `未检查，需人工确认（${r.skipped.length}）`),
-      el('p', { className: 'hint' }, '下面这些项工具没有判断，不代表符合要求，请对照学校规范自己看一遍。'),
+      el('p', { className: 'note' }, '下面这些项工具没有判断，不代表符合要求，请对照学校规范自己看一遍。'),
       el('ul', { className: 'skipped' }, ...r.skipped.map((p) => el('li', {}, `${CATEGORY_LABEL[p.category]} · ${p.item}：${p.reason}`))),
     )
   }
   if (r.passed.length) nodes.push(details(`通过的 ${r.passed.length} 项`, r.passed.map((p) => `${CATEGORY_LABEL[p.category]} · ${p.item}`)))
 
   if (r.references.length) {
-    const btn = el('button', { type: 'button', className: 'ghost' }, `把抽出的 ${r.references.length} 条参考文献送去核验真伪`)
+    const btn = el('button', { type: 'button', className: 'btn' }, `把抽出的 ${r.references.length} 条参考文献送去核验真伪`)
     btn.addEventListener('click', () => onRefs(r.references))
     nodes.push(el('div', { className: 'actions' }, btn))
   }

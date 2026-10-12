@@ -14,7 +14,7 @@ for (const m of html.matchAll(/<link\b[^>]*\bhref=["']([^"']+)["']/gi)) {
 for (const m of html.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi)) {
   if (!/^data:/.test(m[1])) problems.push(`<img src="${m[1].slice(0, 60)}">`)
 }
-for (const m of html.matchAll(/url\(\s*["']?([^)"']+)["']?\s*\)/gi)) {
+for (const m of html.matchAll(/(?<![\w$.])url\(\s*["']?([^)"']+)["']?\s*\)/gi)) {
   if (!/^(data:|#)/.test(m[1])) problems.push(`url(${m[1].slice(0, 60)})`)
 }
 if (!html.includes('id="refs"')) problems.push('缺少 #refs 文本框')
