@@ -77,7 +77,7 @@ function renderCitationMap(map: CitationMap, verify: (VerifyLink | undefined)[])
     list.append(el('li', {}, el('span', { className: 'cmap-n mono' }, r.label), main, el('span', { className: 'cmap-v' }, v)))
   }
   d.append(list)
-  if (!verified && map.references.length) d.append(el('p', { className: 'note' }, '右列是引用核验结果：点下面的按钮把参考文献送去核验后，会在这里标出每条的结果。'))
+  if (!verified && map.references.length) d.append(el('p', { className: 'note' }, '每条的核验结果显示在“未送核验”的位置：点下面的按钮把参考文献送去核验后，这里会标出结果。'))
   box.append(d)
   return box
 }
