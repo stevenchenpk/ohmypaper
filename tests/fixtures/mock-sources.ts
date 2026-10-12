@@ -27,6 +27,15 @@ export const MOCK_DB: MockWork[] = [
   { doi: '10.1038/s41586-021-03819-2', title: 'Highly accurate protein structure prediction with AlphaFold', year: 2021, family: 'Jumper' },
 ]
 
+/** 在 doi.org 存在、但不归 Crossref / DataCite 管的 DOI（知网、万方、JaLC 等注册） */
+export const MOCK_OTHER_RA: Record<string, string> = {
+  '10.13336/j.1003-6520.hve.20160308001': 'CNKI',
+  '10.3969/j.issn.1000-3428.2020.01.001': 'ISTIC',
+  '10.2183/pjab.96.001': 'JaLC',
+  '10.13718/j.cnki.xxxx.2023.01.001': 'CNKI',
+  '10.19744/j.cnki.11-1235/f.2022.0050': 'CNKI',
+}
+
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 
 /** 简化检索：查询词中出现标题里两个以上长词（标题只有一个长词时出现这一个）就算命中 */
@@ -98,6 +107,13 @@ export function mockFetcher(db: MockWork[]): Fetcher {
     if (url.hostname === 'api.openalex.org') {
       const q = url.searchParams.get('search') ?? ''
       return json({ results: search(db, q).map(openAlexItem) })
+    }
+    if (url.hostname === 'doi.org' && url.pathname.startsWith('/ra/')) {
+      const doi = decodeURIComponent(url.pathname.slice(4)).toLowerCase()
+      const w = db.find((x) => x.doi === doi)
+      if (w) return json([{ DOI: doi, RA: isDatacite(w.doi) ? 'DataCite' : 'Crossref' }])
+      if (MOCK_OTHER_RA[doi]) return json([{ DOI: doi, RA: MOCK_OTHER_RA[doi] }])
+      return json([{ DOI: doi, status: 'DOI does not exist' }])
     }
     return new Response('unexpected host', { status: 500 })
   }

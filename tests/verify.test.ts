@@ -69,6 +69,47 @@ describe('verifyReference', () => {
     expect(r.status).toBe('manual')
   })
 
+  it('英文论文的 DOI 由知网注册：需人工核对，不说是虚构', async () => {
+    const r = await v('ZHANG W, LI Q. Partial discharge detection in high voltage cables[J]. High Voltage Engineering, 2016, 42(3): 1-8. DOI:10.13336/j.1003-6520.hve.20160308001.')
+    expect(r.status).toBe('manual')
+    expect(r.reason).toContain('知网')
+    expect(r.reason).not.toContain('虚构')
+    expect(r.links[0].url).toBe('https://doi.org/10.13336/j.1003-6520.hve.20160308001')
+  })
+
+  it('日本 JaLC 注册的 DOI：需人工核对', async () => {
+    const r = await v('YAMADA T. A study of rice genome evolution[J]. Proc Jpn Acad Ser B, 2020, 96: 1-10. DOI:10.2183/pjab.96.001.')
+    expect(r.status).toBe('manual')
+    expect(r.reason).toContain('JaLC')
+  })
+
+  it('注册机构查询失败：不下"不存在"的结论', async () => {
+    const base = mockFetcher(MOCK_DB)
+    const fetcher: Fetcher = async (url) => (url.startsWith('https://doi.org/ra/') ? Promise.reject(new TypeError('Failed to fetch')) : base(url))
+    const r = await verifyReference(parseReference('SMITH J. Fabricated study of things[J]. Nature, 2021. DOI:10.1038/fake-0000.', 1), { fetcher })
+    expect(r.status).toBe('manual')
+    expect(r.reason).not.toContain('不存在')
+    expect(r.reason).not.toContain('虚构')
+  })
+
+  it('中文条目的 DOI 在 doi.org 也不存在：信息不符', async () => {
+    const r = await v('王五. 某研究[J]. 某学报, 2023. DOI:10.99999/j.cnki.fake.2023.01.001.')
+    expect(r.status).toBe('mismatch')
+    expect(r.reason).toContain('不存在')
+  })
+
+  it('标题检索先查 Crossref，命中就不再消耗 OpenAlex 额度', async () => {
+    const seen: string[] = []
+    const base = mockFetcher(MOCK_DB)
+    const fetcher: Fetcher = async (url) => {
+      seen.push(new URL(url).hostname)
+      return base(url)
+    }
+    const r = await verifyReference(parseReference('VASWANI A, SHAZEER N, PARMAR N, et al. Attention is all you need[C]. NeurIPS, 2017.', 1), { fetcher })
+    expect(r.status).toBe('verified')
+    expect(seen).not.toContain('api.openalex.org')
+  })
+
   it('解析不出标题：需人工核对', async () => {
     const r = await v('Some unstructured note without structure')
     expect(r.status).toBe('manual')
