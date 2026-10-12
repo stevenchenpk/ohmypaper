@@ -2,7 +2,7 @@
 
 import type { Paragraph } from '../docx'
 import type { HeadingRule } from '../profile'
-import { CHAPTER_RE, isBackTitle, isFrontTitle, locate } from '../structure'
+import { CHAPTER_RE, isBackTitle, isFrontTitle, locate, shownText } from '../structure'
 import type { CheckContext } from './context'
 import { checkTextStyle } from './textStyle'
 
@@ -120,16 +120,20 @@ export function checkHeadings(ctx: CheckContext) {
         ctx.skip('headings', `${label}编号`, `档案里的编号写法"${rule.numbering}"无法识别`)
         return
       }
-      const manual = paras.filter((p) => !p.numbered)
-      const bad = manual.filter((p) => !re.test(p.text.trim()))
+      // 自动编号的标题按渲染出来的编号文字检查；编号格式认不出的只能记"未检查"
+      const readable = paras.filter((p) => !p.numbered || p.listLabel !== null)
+      const bad = readable.filter((p) => !re.test(shownText(p).trim()))
       if (bad.length) {
         ctx.addForParagraphs(bad, {
           id: `h${level}-numbering`, category: 'headings', severity: 'error',
           title: `${label}编号写法不符合要求（${bad.length} 处）`,
-          expected: `形如"${rule.numbering}"`, basis: ctx.schoolBasis,
+          expected: `形如"${rule.numbering}"`,
+          actual: bad[0].listLabel !== null ? `自动编号显示为"${bad[0].listLabel}"` : undefined,
+          detail: bad.some((p) => p.listLabel !== null) ? '自动编号的写法要在"定义新的多级列表"里改，改一处整级都会变。' : undefined,
+          basis: ctx.schoolBasis,
         })
-      } else if (manual.length) ctx.pass('headings', `${label}编号写法`)
-      if (manual.length < paras.length) ctx.skip('headings', `${label}自动编号`, '使用了 Word 自动编号，编号文字不在正文里，无法检查写法')
+      } else if (readable.length) ctx.pass('headings', `${label}编号写法`)
+      if (readable.length < paras.length) ctx.skip('headings', `${label}自动编号`, '使用了无法识别的 Word 自动编号格式，请自己核对编号写法')
     }
   })
 }
@@ -140,8 +144,9 @@ function checkNumberSequence(ctx: CheckContext, headings: Paragraph[]) {
   const last: number[] = [] // 各级最近的编号
   let checked = 0
   for (const p of headings) {
-    const n = headingNumber(p.text)
-    if (!n || p.numbered) continue
+    if (p.numbered && p.listLabel === null) continue
+    const n = headingNumber(shownText(p))
+    if (!n) continue
     checked++
     const depth = n.length
     const parentsMatch = n.slice(0, depth - 1).every((v, i) => last[i] === undefined || last[i] === v)
@@ -161,7 +166,7 @@ function checkNumberSequence(ctx: CheckContext, headings: Paragraph[]) {
   if (bad.length) {
     ctx.add({
       id: 'headings-number-sequence', category: 'headings', severity: 'warning', title: '标题编号不连续或错号',
-      detail: bad.slice(0, 3).map((b) => `"${b.p.text.trim().slice(0, 20)}"${b.why}`).join('；'),
+      detail: bad.slice(0, 3).map((b) => `"${shownText(b.p).trim().slice(0, 20)}"${b.why}`).join('；'),
       locations: bad.map((b) => locate(b.p, ctx.s)), basis: '通用排版惯例',
     })
   } else if (checked > 1) ctx.pass('headings', '标题编号连续')

@@ -8,7 +8,7 @@ import type { Paragraph } from '../docx'
 import { parseReference } from '../../references/parse'
 import { type Edition, RULES, analyzeEntry, checkEntry } from '../../references/style/gbt7714'
 import type { SchoolProfile } from '../profile'
-import { locate, norm } from '../structure'
+import { locate, norm, shownText } from '../structure'
 import { type CheckContext, unknownNote } from './context'
 import { checkTextStyle } from './textStyle'
 
@@ -75,12 +75,13 @@ export function checkReferences(ctx: CheckContext) {
 
   // 序号
   const numbers: (number | null)[] = entries.map((p, i) => {
-    const m = p.text.match(MANUAL_NO)
+    const m = shownText(p).match(MANUAL_NO)
     if (m) return Number(m[1])
-    return p.numbered ? i + 1 : null
+    // 自动编号但编号格式认不出：至少有序号，按顺序算
+    return p.numbered && p.listLabel === null ? i + 1 : null
   })
   if (style === 'numeric') {
-    const dotted = entries.filter((p) => !MANUAL_NO.test(p.text) && DOTTED_NO.test(p.text))
+    const dotted = entries.filter((p) => !MANUAL_NO.test(shownText(p)) && DOTTED_NO.test(shownText(p)))
     const missing = entries.filter((p, i) => numbers[i] === null && !dotted.includes(p))
     if (dotted.length) {
       ctx.addForParagraphs(dotted, {
@@ -94,7 +95,7 @@ export function checkReferences(ctx: CheckContext) {
         expected: '顺序编码制下每条参考文献前都要有 [1]、[2] 这样的序号', basis,
       })
     }
-    const seqBad = entries.filter((p, i) => MANUAL_NO.test(p.text) && numbers[i] !== i + 1)
+    const seqBad = entries.filter((p, i) => MANUAL_NO.test(shownText(p)) && numbers[i] !== i + 1)
     if (seqBad.length) {
       ctx.addForParagraphs(seqBad, {
         id: 'refs-number-sequence', category: 'references', severity: 'error', title: '参考文献序号不连续或重复',

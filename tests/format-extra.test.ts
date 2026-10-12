@@ -6,7 +6,7 @@ import { tocEntryTitle } from '../src/format/checks/toc'
 /** 用最少的字段拼一个段落，其余取常见默认值 */
 function para(index: number, text: string, extra: Partial<Paragraph> = {}): Paragraph {
   return {
-    index, text, styleId: null, styleName: null, headingLevel: null, inTable: false, inToc: false, numbered: false,
+    index, text, styleId: null, styleName: null, headingLevel: null, inTable: false, inToc: false, numbered: false, listLabel: null,
     sectionIndex: 0, hasMath: false, align: 'justify', lineSpacing: { kind: 'multiple', value: 1.5 }, firstLineChars: 2, firstLinePt: null,
     spaceBefore: { lines: null, pt: 0 }, spaceAfter: { lines: null, pt: 0 },
     runs: [{ text, fontEn: 'Times New Roman', fontCn: '宋体', sizePt: 12, bold: false, superscript: false }],
@@ -161,5 +161,35 @@ describe('结果措辞', () => {
     expect(severityLabel('error', false)).toBe('与通用要求不符')
     expect(severityLabel('error', true)).toBe('与所选规则不符')
     expect(severityLabel('warning', false)).toBe('检测到问题')
+  })
+})
+
+describe('自动编号的标题', () => {
+  const profile = {
+    school: { name: '测试大学', code: 'test' }, degree: 'bachelor', cohort: 2026, status: 'draft',
+    sources: [{ title: '规范', url: 'https://example.edu.cn' }], maintainers: [], last_verified: '2026-10-11',
+    references: { standard: 'GB/T 7714-2025', style: 'numeric' },
+    format: { headings: [{ numbering: '第一章' }, { numbering: '1.1' }] },
+  } as const
+  const auto = (label: string, h: object) => ({ ...h, numbered: true, listLabel: label })
+
+  it('按渲染出的编号检查写法：要求"第一章"、列表显示"第1章"时检出', () => {
+    const r = checkModel(model([['绪论', auto('第1章', H1)], ['背景', auto('1.1', H2)], ['内容。']]), profile as never)
+    const issue = r.issues.find((i) => i.id === 'h1-numbering')!
+    expect(issue.actual).toBe('自动编号显示为"第1章"')
+    expect(r.passed.map((p) => p.item)).toContain('二级标题编号写法')
+  })
+
+  it('二级标题的列表没跟一级标题关联、换章不重新开始时检出', () => {
+    expect(ids(model([
+      ['第一章 绪论', H1], ['背景', auto('1.1', H2)], ['意义', auto('1.2', H2)],
+      ['第二章 方法', H1], ['步骤', auto('1.3', H2)],
+    ]))).toContain('headings-number-sequence')
+  })
+
+  it('编号格式认不出时记"未检查"，不算通过', () => {
+    const r = checkModel(model([['绪论', { ...H1, numbered: true }], ['内容。']]), profile as never)
+    expect(r.skipped.map((p) => p.item)).toContain('一级标题自动编号')
+    expect(r.passed.map((p) => p.item)).not.toContain('一级标题编号写法')
   })
 })

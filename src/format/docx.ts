@@ -8,6 +8,7 @@
 
 import { unzipSync, strFromU8 } from 'fflate'
 import { DOMParser } from '@xmldom/xmldom'
+import { Numbering } from './numbering'
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 const A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
@@ -49,6 +50,8 @@ export interface Paragraph {
   inToc: boolean
   /** 使用了自动编号（列表） */
   numbered: boolean
+  /** 自动编号渲染出来的编号文字，如"第1章""1.2""[3]"；没有自动编号或编号格式认不出时为 null */
+  listLabel: string | null
   sectionIndex: number
   align: Align
   lineSpacing: LineSpacing
@@ -184,7 +187,9 @@ interface ParaProps {
   firstLineChars?: number
   hanging?: number
   outlineLvl?: number
-  numbered?: boolean
+  /** 自动编号：numId 为 '0' 表示取消上层样式带来的编号 */
+  numId?: string
+  ilvl?: number
 }
 
 function readRunProps(rPr: El | null): RunProps {
@@ -236,7 +241,12 @@ function readParaProps(pPr: El | null): ParaProps {
   const ol = num(attr(child(pPr, 'outlineLvl'), 'val'))
   if (ol !== null) p.outlineLvl = ol
   const numPr = child(pPr, 'numPr')
-  if (numPr) p.numbered = attr(child(numPr, 'numId'), 'val') !== '0'
+  if (numPr) {
+    const id = attr(child(numPr, 'numId'), 'val')
+    const lvl = num(attr(child(numPr, 'ilvl'), 'val'))
+    if (id !== null) p.numId = id
+    if (lvl !== null) p.ilvl = lvl
+  }
   return p
 }
 
@@ -449,6 +459,10 @@ export function parseDocx(data: Uint8Array): DocxModel {
   }
 
   const styles = new Styles(read('word/styles.xml'))
+  const numbering = new Numbering(read('word/numbering.xml'), (id) => {
+    const pp = styles.paragraph(id).pPr
+    return pp.numId === undefined ? null : { numId: pp.numId, ilvl: pp.ilvl }
+  })
   const theme = readTheme(read('word/theme/theme1.xml'))
   const settings = read('word/settings.xml')
   const evenAndOddHeaders = settings ? toggle(child(settings.documentElement, 'evenAndOddHeaders')) === true : false
@@ -556,6 +570,14 @@ export function parseDocx(data: Uint8Array): DocxModel {
     if (direct.outlineLvl !== undefined) headingLevel = direct.outlineLvl < 9 ? direct.outlineLvl + 1 : null
     else headingLevel = styles.headingLevel(styleId)
 
+    // 自动编号：按文档顺序计数，每个编号段落都要数，包括表格里的
+    const numbered = pp.numId !== undefined && pp.numId !== '0'
+    let listLabel: string | null = null
+    if (numbered) {
+      const ilvl = pp.ilvl ?? numbering.levelForStyle(pp.numId!, styleId)
+      listLabel = numbering.next(pp.numId!, ilvl)?.text ?? null
+    }
+
     const isToc = ctx.inToc || /^(toc|目录)\s*\d*$/i.test(styleName ?? '') || /^toc\s*heading$/i.test(styleName ?? '')
     if (isToc) headingLevel = null
 
@@ -572,7 +594,8 @@ export function parseDocx(data: Uint8Array): DocxModel {
       headingLevel,
       inTable: ctx.inTable,
       inToc: isToc,
-      numbered: pp.numbered === true,
+      numbered,
+      listLabel,
       sectionIndex: sections.length,
       align: normalizeAlign(pp.jc),
       lineSpacing,

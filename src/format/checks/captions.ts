@@ -4,7 +4,7 @@
  */
 
 import type { Paragraph } from '../docx'
-import { isBackTitle, isFrontTitle, locate } from '../structure'
+import { isBackTitle, isFrontTitle, locate, shownText } from '../structure'
 import type { CheckContext } from './context'
 import { headingNumber } from './headings'
 
@@ -28,7 +28,7 @@ export function findCaptions(ctx: CheckContext): Caption[] {
     if (p.inToc) continue
     if (p.headingLevel === 1 && s.bodyStart !== null && p.index >= s.bodyStart && !isFrontTitle(p) && !isBackTitle(p)) {
       chapterOrdinal++
-      chapter = (!p.numbered && headingNumber(p.text)?.[0]) || chapterOrdinal
+      chapter = (p.numbered && p.listLabel === null ? null : headingNumber(shownText(p))?.[0]) || chapterOrdinal
       continue
     }
     if (p.headingLevel !== null) continue

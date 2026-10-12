@@ -75,6 +75,11 @@ export function analyze(doc: DocxModel): Structure {
   return { bodyStart, bodyEnd, refHeading, refEntries, frontHeadings, contextOf: (i) => headingAt[i] }
 }
 
+/** 段落显示出来的文字：自动编号的编号文字 + 段落文字，如"第1章 绪论" */
+export function shownText(p: Paragraph): string {
+  return p.listLabel ? `${p.listLabel} ${p.text.trimStart()}` : p.text
+}
+
 export function excerpt(text: string, n = 24): string {
   const t = text.replace(/\s+/g, ' ').trim()
   return t.length > n ? t.slice(0, n) + '…' : t

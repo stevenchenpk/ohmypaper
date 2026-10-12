@@ -1,7 +1,7 @@
 /** 目录与正文标题是否一致：最常见的原因是改了标题却没有"更新目录"。 */
 
 import type { Paragraph } from '../docx'
-import { excerpt, locate, norm } from '../structure'
+import { excerpt, locate, norm, shownText } from '../structure'
 import type { CheckContext } from './context'
 
 /** 去掉目录行末尾的制表符、点线和页码（含罗马数字页码） */
@@ -23,7 +23,7 @@ export function checkToc(ctx: CheckContext) {
   // 自动编号的标题，目录里带编号而正文段落文字里没有，所以用"以标题结尾"来匹配
   const matches = (entry: string, h: Paragraph) => {
     const e = norm(entry), t = norm(h.text)
-    return e === t || (t.length >= 2 && e.endsWith(t))
+    return e === t || e === norm(shownText(h)) || (t.length >= 2 && e.endsWith(t))
   }
 
   const titles = entries.map((p) => tocEntryTitle(p.text))
