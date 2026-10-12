@@ -6,7 +6,8 @@ import { DocxError } from './docx'
 import { checkDocx } from './engine'
 import type { WorkerRequest, WorkerResponse } from './worker'
 import { type SchoolProfile, profileLabel } from './profile'
-import { CATEGORY_LABEL, type Category, type Issue, type Report, type Severity, severityLabel } from './report'
+import { CATEGORY_LABEL, type Category, type CitationMap, type Issue, type Report, type Severity, severityLabel } from './report'
+import { type VerifyLink, citationNotes, citationRows, citationSummary, verifyCallouts } from './citationView'
 
 // 构建时把 schools/ 下的档案全部打进页面，运行时不联网
 const raw = import.meta.glob('../../schools/*/*.yaml', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
@@ -49,7 +50,39 @@ function renderIssue(i: Issue, hasProfile: boolean): HTMLElement {
   )
 }
 
-function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => void) {
+/**
+ * 引用对账表：折叠的 <details>，标题上直接写概况。
+ * 送去核验之后，每条加上核验结果；查无此文、信息不符的，在表格外面列出正文里引用它的位置。
+ */
+function renderCitationMap(map: CitationMap, verify: (VerifyLink | undefined)[]): HTMLElement {
+  const box = el('div', { className: 'cmap' })
+  const callouts = verifyCallouts(map, verify)
+  if (callouts.length) {
+    box.append(
+      el('p', { className: 'cmap-lead' }, '核验有问题的文献在正文中的引用位置：'),
+      el('ul', { className: 'cmap-bad' }, ...callouts.map((t) => el('li', {}, t))),
+    )
+  }
+  const d = el('details', { className: 'notes cmap-table' }, el('summary', {}, '引用对账表', el('span', { className: 'cmap-sum' }, citationSummary(map))))
+  for (const n of citationNotes(map)) d.append(el('p', { className: 'note' }, n))
+  const verified = verify.some(Boolean)
+  const rows = citationRows(map, verify)
+  const list = el('ol', { className: 'cmap-rows' })
+  for (const r of rows) {
+    const main = el('div', { className: 'cmap-main' }, el('span', { className: `cmap-tone tone-${r.citedTone}` }, r.cited))
+    if (r.where) main.append(el('span', { className: 'ctx' }, r.where))
+    const v = r.verify
+      ? el('span', { className: `st ${r.verify.status}` }, r.verify.label)
+      : el('span', { className: 'cmap-nv mono' }, verified ? '未核验' : '未送核验')
+    list.append(el('li', {}, el('span', { className: 'cmap-n mono' }, r.label), main, el('span', { className: 'cmap-v' }, v)))
+  }
+  d.append(list)
+  if (!verified && map.references.length) d.append(el('p', { className: 'note' }, '右列是引用核验结果：点下面的按钮把参考文献送去核验后，会在这里标出每条的结果。'))
+  box.append(d)
+  return box
+}
+
+function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => void): HTMLElement | null {
   const counts: Record<Severity, number> = { error: 0, warning: 0, info: 0 }
   for (const i of r.issues) counts[i.severity]++
 
@@ -91,12 +124,16 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
   }
   if (r.passed.length) nodes.push(details(`通过的 ${r.passed.length} 项`, r.passed.map((p) => `${CATEGORY_LABEL[p.category]} · ${p.item}`)))
 
+  const cmap = r.citationMap ? renderCitationMap(r.citationMap, []) : null
+  if (cmap) nodes.push(cmap)
+
   if (r.references.length) {
     const btn = el('button', { type: 'button', className: 'btn' }, `把抽出的 ${r.references.length} 条参考文献送去核验真伪`)
     btn.addEventListener('click', () => onRefs(r.references))
     nodes.push(el('div', { className: 'actions' }, btn))
   }
   out.replaceChildren(...nodes)
+  return cmap
 }
 
 /** 优先在 Web Worker 里检查；浏览器不支持时退回主线程 */
@@ -163,15 +200,18 @@ export function mountFormatCheck(opts: { onReferences: (refs: string[]) => void;
     )
   }
 
+  let shown: { report: Report; cmap: HTMLElement | null } | null = null
+
   const run = async () => {
     const f = file.files?.[0]
     if (!f) return
     opts.onStart?.()
     status.textContent = `正在检查 ${f.name}…`
     out.replaceChildren()
+    shown = null
     try {
       const report = await runCheck(new Uint8Array(await f.arrayBuffer()), current()?.profile ?? null)
-      renderReport(report, out, opts.onReferences)
+      shown = { report, cmap: renderReport(report, out, opts.onReferences) }
       status.textContent = `检查完成：${f.name}`
       const c = current()
       const counts = { error: 0, warning: 0, info: 0, passed: report.passed.length, skipped: report.skipped.length }
@@ -189,6 +229,19 @@ export function mountFormatCheck(opts: { onReferences: (refs: string[]) => void;
   file.addEventListener('change', () => void run())
   showNote()
   return {
+    /**
+     * 引用核验跑完后调用：refs 是送去核验的那份参考文献原文，results[i] 是第 i 条的结果。
+     * 只有和当前体检报告抽出的参考文献完全一致时才对上，否则不显示（避免张冠李戴）。
+     */
+    showVerify(refs: string[], results: (VerifyLink | undefined)[]) {
+      if (!shown?.cmap || !shown.report.citationMap) return
+      const same = refs.length === shown.report.references.length && refs.every((t, i) => t === shown!.report.references[i])
+      const next = renderCitationMap(shown.report.citationMap, same ? results : [])
+      const open = shown.cmap.querySelector('details')?.open ?? false
+      next.querySelector('details')!.open = open
+      shown.cmap.replaceWith(next)
+      shown.cmap = next
+    },
     /** 恢复上次的学校选择；找不到对应档案时保持不变 */
     setSchool(path: string | null) {
       if (path === null) select.value = ''

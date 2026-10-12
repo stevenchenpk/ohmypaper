@@ -6,6 +6,8 @@
 
 import type { Paragraph } from '../docx'
 import { parseReference } from '../../references/parse'
+import { parseGbt7714 } from '../../references/structured'
+import { yearOf } from '../../references/structured/types'
 import { type Edition, RULES, analyzeEntry, checkEntry } from '../../references/style/gbt7714'
 import type { SchoolProfile } from '../profile'
 import { entryNumber, reconcileCitations } from '../citations'
@@ -129,27 +131,18 @@ export function checkReferences(ctx: CheckContext) {
     })
   }
 
-  // 出版年、重复条目、外文条数
+  // 出版年、外文条数
   const noYear: Paragraph[] = []
-  const seen = new Map<string, Paragraph>()
-  const dups: Paragraph[] = []
   let foreign = 0
   for (const p of entries) {
     const parsed = parseReference(referenceText(p), 0)
     if (!parsed.isChinese) foreign++
     if (parsed.year === null) noYear.push(p)
-    if (parsed.title) {
-      const key = norm(parsed.title)
-      if (key.length >= 6 && seen.has(key)) dups.push(p)
-      else seen.set(key, p)
-    }
   }
-  const report = (list: Paragraph[], id: string, title: string, detail: string, passName: string) => {
-    if (list.length) ctx.addForParagraphs(list, { id, category: 'references', severity: 'warning', title: `${title}（${list.length} 条）`, detail, basis })
-    else ctx.pass('references', passName)
-  }
-  report(noYear, 'refs-year', '没有找到出版年', '每条文献都应著录出版年（网页写发布或修改日期）。', '出版年')
-  report(dups, 'refs-duplicate', '疑似重复的参考文献', '这些条目的题名与前面某一条相同。', '无重复条目')
+  if (noYear.length) ctx.addForParagraphs(noYear, { id: 'refs-year', category: 'references', severity: 'warning', title: `没有找到出版年（${noYear.length} 条）`, detail: '每条文献都应著录出版年（网页写发布或修改日期）。', basis })
+  else ctx.pass('references', '出版年')
+
+  checkDuplicates(ctx, entries, numbers, basis)
 
   // 条数要求
   if (refRule?.min_count) {
@@ -225,4 +218,42 @@ function checkCitations(ctx: CheckContext, basis: string) {
       locations: r.outOfOrder.map((o) => locate(at(o.citation), s)), basis,
     })
   } else ctx.pass('references', '引用顺序')
+}
+
+/** 题名比较用：去掉空白、标点和大小写差别 */
+const titleKey = (t: string) => norm(t).replace(/[^\p{L}\p{N}]/gu, '')
+
+/**
+ * 重复条目：同一篇文献用两个编号各列了一次。
+ * 按结构化解析出的题名比较，第一作者和出版年都解析出来时也要一致（同名的再版、译本不算重复）。
+ * 题名没拆出来（或没有文献类型标识、只能粗拆）的条目无法判断，记"未检查"，不算通过。
+ */
+function checkDuplicates(ctx: CheckContext, entries: Paragraph[], numbers: (number | null)[], basis: string) {
+  const label = (i: number) => (numbers[i] !== null ? `[${numbers[i]}]` : `第 ${i + 1} 条`)
+  const seen: { i: number; title: string; author: string; year: number | null }[] = []
+  const dups: Paragraph[] = []
+  const pairs: string[] = []
+  let unknown = 0
+  entries.forEach((p, i) => {
+    const { csl, typeCode } = parseGbt7714(referenceText(p))
+    // 没有文献类型标识时题名是粗拆出来的，不可靠，不比较
+    const title = csl.title && typeCode ? titleKey(csl.title) : ''
+    if (title.length < 6) return void unknown++
+    const a = csl.author?.[0]
+    const author = a ? norm(a.family ?? a.literal ?? '') : ''
+    const year = yearOf(csl)
+    const prior = seen.find((x) => x.title === title && (!author || !x.author || x.author === author) && (year === null || x.year === null || x.year === year))
+    if (prior) {
+      dups.push(p)
+      pairs.push(`${label(prior.i)} 和 ${label(i)}`)
+    } else seen.push({ i, title, author, year })
+  })
+  if (dups.length) {
+    ctx.addForParagraphs(dups, {
+      id: 'refs-duplicate', category: 'references', severity: 'warning', title: `疑似重复的参考文献（${dups.length} 条）`,
+      detail: `${pairs.slice(0, 3).join('，')}${pairs.length > 3 ? ' 等' : ''}的题名、第一作者和出版年相同，像是同一篇文献列了两次。如果确实是两篇，可以忽略。${unknown ? `另有 ${unknown} 条没拆出题名，没有比较。` : ''}`,
+      basis,
+    })
+  } else if (seen.length) ctx.pass('references', '无重复条目')
+  if (unknown) ctx.skip('references', '无重复条目', `${unknown} 条参考文献没拆出题名，无法判断是否和别的条目重复，需人工确认`)
 }

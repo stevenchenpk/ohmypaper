@@ -34,6 +34,8 @@ const summary = $<HTMLElement>('summary')
 const resultsEl = $<HTMLElement>('results')
 
 let last: { results: VerifyResult[]; at: Date } | null = null
+/** 从格式体检送过来的参考文献：核验完后把结果回填到引用对账表 */
+let fromFormat: { refs: string[]; text: string } | null = null
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, props: Partial<HTMLElementTagNameMap[K]> = {}, ...children: (Node | string)[]) {
   const node = Object.assign(document.createElement(tag), props)
@@ -151,6 +153,12 @@ async function run() {
   const next = withResume(dossier, { citation: citationResume(input.value, results, now) }, now)
   void persist({ ...next, library: libraryFromResults(results, dossier.library, now) })
   report.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  // 只有核验的正是体检送过来、且没被改过的那份列表时，才按序号回填
+  if (fromFormat && input.value === fromFormat.text && results.length === fromFormat.refs.length) {
+    const byIndex: VerifyResult[] = []
+    for (const r of results) byIndex[r.ref.index - 1] = r
+    formatCheck.showVerify(fromFormat.refs, fromFormat.refs.map((_, i) => byIndex[i]))
+  } else formatCheck.showVerify([], [])
 }
 
 function download(name: string, content: string, type: string) {
@@ -188,6 +196,7 @@ $<HTMLButtonElement>('print').addEventListener('click', () => window.print())
 const formatCheck = mountFormatCheck({
   onReferences: (refs) => {
     input.value = refs.map((r, i) => `[${i + 1}] ${r}`).join('\n')
+    fromFormat = { refs, text: input.value }
     document.getElementById('verify')?.scrollIntoView({ behavior: 'smooth' })
     void run()
   },
