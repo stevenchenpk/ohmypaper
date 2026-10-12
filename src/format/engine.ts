@@ -6,7 +6,8 @@
 import { type DocxModel, parseDocx } from './docx'
 import type { SchoolProfile } from './profile'
 import { profileLabel } from './profile'
-import type { Report, Severity } from './report'
+import type { CitationMap, Report, Severity } from './report'
+import { reconcileCitations } from './citations'
 import { CheckContext } from './checks/context'
 import { checkCaptions } from './checks/captions'
 import { checkCleanup } from './checks/cleanup'
@@ -15,7 +16,7 @@ import { checkPage } from './checks/page'
 import { checkReferences, referenceText } from './checks/references'
 import { checkTextStyle } from './checks/textStyle'
 import { checkToc } from './checks/toc'
-import { analyze } from './structure'
+import { type Structure, analyze, locate } from './structure'
 
 const CJK_RE = /[\u3400-\u9fff]/
 /** 行尾的公式编号，如 (2-1)、（3.2） */
@@ -74,5 +75,25 @@ export function checkModel(doc: DocxModel, profile: SchoolProfile | null): Repor
       references: s.refEntries.length,
     },
     references: s.refEntries.map(referenceText),
+    // 只对顺序编码制做对账；学校要求 APA 等其他格式时不做
+    citationMap: (profile?.references?.style ?? 'numeric') === 'numeric' && !/^(APA-7|other)$/.test(profile?.references?.standard ?? '') && s.refHeading !== null
+      ? citationMap(doc, s)
+      : null,
+  }
+}
+
+function citationMap(doc: DocxModel, s: Structure): CitationMap {
+  const r = reconcileCitations(doc, s)
+  const at = (i: number) => locate(doc.paragraphs[i], s)
+  return {
+    citations: r.citations.map((c) => ({ raw: c.raw, numbers: c.numbers, location: at(c.paragraph), superscript: c.superscript, bare: c.bare })),
+    references: r.entries.map((e, i) => ({
+      number: e.number, text: referenceText(s.refEntries[i]), timesCited: e.timesCited,
+      firstCited: e.firstCitation === null ? null : at(r.citations[e.firstCitation].paragraph),
+    })),
+    missing: r.missing.map((m) => m.number),
+    uncited: r.uncited,
+    outOfOrder: r.outOfOrder.map((o) => o.number),
+    malformed: r.malformed.map((c) => c.raw),
   }
 }

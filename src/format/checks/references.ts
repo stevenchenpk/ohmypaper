@@ -8,6 +8,7 @@ import type { Paragraph } from '../docx'
 import { parseReference } from '../../references/parse'
 import { type Edition, RULES, analyzeEntry, checkEntry } from '../../references/style/gbt7714'
 import type { SchoolProfile } from '../profile'
+import { entryNumber, reconcileCitations } from '../citations'
 import { locate, norm, shownText } from '../structure'
 import { type CheckContext, unknownNote } from './context'
 import { checkTextStyle } from './textStyle'
@@ -16,8 +17,6 @@ import { checkTextStyle } from './textStyle'
 const AUTHOR_RULES = new Set(['surname-case', 'author-limit', 'etal-language'])
 const MANUAL_NO = /^\s*[[［]\s*(\d+)\s*[\]］]\s*/
 const DOTTED_NO = /^\s*(\d+)\s*[.．、]\s*/
-/** 正文里的 [1]、[2-5]、[1,3]、［6］ */
-const CITE_RE = /[[［]\s*(\d{1,3}(?:\s*[-–—~～,，、]\s*\d{1,3})*)\s*[\]］]/g
 
 /**
  * 用哪一版国标：档案写明了就用档案的；没写时用现行的 2025 版
@@ -30,18 +29,6 @@ export function editionFor(profile: SchoolProfile | null): Edition {
 function editionLabel(edition: Edition, profile: SchoolProfile | null): string {
   const explicit = profile?.references?.standard
   return `GB/T 7714—${edition}${explicit ? '' : '（学校档案未指定版本，按现行版检查）'}`
-}
-
-function expandCitation(s: string): number[] {
-  const out: number[] = []
-  for (const part of s.split(/[,，、]/)) {
-    const m = part.trim().match(/^(\d+)\s*[-–—~～]\s*(\d+)$/)
-    if (m) {
-      const [a, b] = [Number(m[1]), Number(m[2])]
-      if (b >= a && b - a <= 50) for (let i = a; i <= b; i++) out.push(i)
-    } else if (/^\d+$/.test(part.trim())) out.push(Number(part.trim()))
-  }
-  return out
 }
 
 export function referenceText(p: Paragraph): string {
@@ -74,12 +61,7 @@ export function checkReferences(ctx: CheckContext) {
   }
 
   // 序号
-  const numbers: (number | null)[] = entries.map((p, i) => {
-    const m = shownText(p).match(MANUAL_NO)
-    if (m) return Number(m[1])
-    // 自动编号但编号格式认不出：至少有序号，按顺序算
-    return p.numbered && p.listLabel === null ? i + 1 : null
-  })
+  const numbers = entries.map(entryNumber)
   if (style === 'numeric') {
     const dotted = entries.filter((p) => !MANUAL_NO.test(shownText(p)) && DOTTED_NO.test(shownText(p)))
     const missing = entries.filter((p, i) => numbers[i] === null && !dotted.includes(p))
@@ -184,66 +166,63 @@ export function checkReferences(ctx: CheckContext) {
   const entryRule = profile?.format?.reference_entries
   if (entryRule) checkTextStyle(ctx, { category: 'references', label: '参考文献条目', id: 'refs-style', paragraphs: entries, rule: entryRule })
 
-  if (style === 'numeric') checkCitations(ctx, entries, numbers, basis)
+  if (style === 'numeric') checkCitations(ctx, basis)
   else ctx.skip('references', '正文引用顺序', '著者-出版年制不检查引用顺序')
 }
 
-function checkCitations(ctx: CheckContext, entries: Paragraph[], numbers: (number | null)[], basis: string) {
+function checkCitations(ctx: CheckContext, basis: string) {
   const { doc, s } = ctx
-  const firstSeen = new Map<number, Paragraph>()
-  const order: number[] = []
-  for (const p of doc.paragraphs) {
-    if (p.index >= s.refHeading! || p.inToc) continue
-    for (const m of p.text.matchAll(CITE_RE)) {
-      for (const n of expandCitation(m[1])) {
-        if (!firstSeen.has(n)) {
-          firstSeen.set(n, p)
-          order.push(n)
-        }
-      }
-    }
-  }
-  if (order.length === 0) {
+  const r = reconcileCitations(doc, s)
+  const at = (ci: number) => doc.paragraphs[r.citations[ci].paragraph]
+
+  if (r.malformed.length) {
     ctx.add({
-      id: 'cite-none', category: 'references', severity: 'info', title: '正文中没有找到 [1] 这样的引用标注',
-      detail: '如果你用的是交叉引用或上标数字，检查可能识别不到；如果用的是著者-出版年制，可以忽略这一条。', basis,
+      id: 'cite-malformed', category: 'references', severity: 'warning', title: `${r.malformed.length} 处引用标号写法有误`,
+      detail: `如 ${r.malformed.slice(0, 3).map((c) => `"${c.raw}"`).join('、')}：区间应从小到大，如 [3-5]。`,
+      locations: r.malformed.map((c) => locate(doc.paragraphs[c.paragraph], s)), basis,
     })
+  }
+  if (r.citations.length === 0) {
+    if (!r.malformed.length) {
+      ctx.add({
+        id: 'cite-none', category: 'references', severity: 'info', title: '正文中没有找到 [1] 这样的引用标注',
+        detail: '如果你用的是交叉引用或上标数字，检查可能识别不到；如果用的是著者-出版年制，可以忽略这一条。', basis,
+      })
+    }
     return
   }
-  const listed = new Set(numbers.filter((n): n is number => n !== null))
-  const max = Math.max(entries.length, ...listed)
 
-  const outOfRange = order.filter((n) => n < 1 || n > max)
-  if (outOfRange.length) {
+  const bare = r.citations.filter((c) => c.bare)
+  if (bare.length) {
+    ctx.add({
+      id: 'cite-no-brackets', category: 'references', severity: 'warning', title: `${bare.length} 处引用标号没有方括号`,
+      detail: `如上标的"${bare[0].raw}"。顺序编码制的引用标号写作上标的 [1]、[2-4]。`,
+      locations: bare.map((c) => locate(doc.paragraphs[c.paragraph], s)), basis,
+    })
+  }
+
+  if (r.missing.length) {
     ctx.add({
       id: 'cite-out-of-range', category: 'references', severity: 'error',
       title: `正文引用了不存在的文献编号`,
-      detail: `正文中出现了 ${outOfRange.slice(0, 5).map((n) => `[${n}]`).join('、')}，但参考文献只有 ${max} 条。`,
-      locations: outOfRange.map((n) => locate(firstSeen.get(n)!, s)), basis,
+      detail: `正文中出现了 ${r.missing.slice(0, 5).map((m) => `[${m.number}]`).join('、')}，参考文献表里没有对应的条目（共 ${r.entries.length} 条）。`,
+      locations: r.missing.map((m) => locate(at(m.citation), s)), basis,
     })
   }
 
-  const uncited = entries.filter((_, i) => numbers[i] !== null && !firstSeen.has(numbers[i]!))
-  if (uncited.length) {
-    ctx.addForParagraphs(uncited, {
-      id: 'cite-uncited', category: 'references', severity: 'warning', title: `${uncited.length} 条参考文献在正文中没有被引用`,
+  if (r.uncited.length) {
+    ctx.addForParagraphs(r.uncited.map((i) => s.refEntries[i]), {
+      id: 'cite-uncited', category: 'references', severity: 'warning', title: `${r.uncited.length} 条参考文献在正文中没有被引用`,
       detail: '列入参考文献的每一条都应在正文中引用。如果正文用的是交叉引用（自动更新的编号），这里可能误报。', basis,
     })
   } else ctx.pass('references', '每条文献都被引用')
 
-  // 顺序编码制：按在正文中第一次出现的先后编号
-  const outOfOrder: number[] = []
-  let maxSoFar = 0
-  for (const n of order) {
-    if (n > max) continue
-    if (n !== maxSoFar + 1 && n > maxSoFar) outOfOrder.push(n)
-    maxSoFar = Math.max(maxSoFar, n)
-  }
-  if (outOfOrder.length) {
+  if (r.outOfOrder.length) {
+    const first = r.outOfOrder[0].number
     ctx.add({
       id: 'cite-order', category: 'references', severity: 'warning', title: '参考文献编号没有按正文中首次引用的先后排列',
-      detail: `顺序编码制要求按文献在正文中第一次出现的顺序编号。例如 [${outOfOrder[0]}] 在 [${outOfOrder[0] - 1}] 之前就出现了。`,
-      locations: outOfOrder.map((n) => locate(firstSeen.get(n)!, s)), basis,
+      detail: `顺序编码制要求按文献在正文中第一次出现的顺序编号。例如 [${first}] 在 [${first - 1}] 之前就出现了。`,
+      locations: r.outOfOrder.map((o) => locate(at(o.citation), s)), basis,
     })
   } else ctx.pass('references', '引用顺序')
 }

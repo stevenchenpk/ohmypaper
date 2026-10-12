@@ -74,6 +74,39 @@ export interface Report {
   }
   /** 从文档中抽出的参考文献原文，供引用核验使用 */
   references: string[]
+  /** 引用对账（顺序编码制）：正文标号与文献表的对应；著者-出版年制或没找到参考文献表时为 null */
+  citationMap: CitationMap | null
+}
+
+export interface CitationLink {
+  raw: string
+  numbers: number[]
+  location: Location
+  superscript: boolean
+  /** 没有方括号的上标数字 */
+  bare: boolean
+}
+
+export interface ReferenceLink {
+  /** 文献表中的编号；读不出为 null */
+  number: number | null
+  /** 与 Report.references 同序 */
+  text: string
+  timesCited: number
+  firstCited: Location | null
+}
+
+export interface CitationMap {
+  citations: CitationLink[]
+  references: ReferenceLink[]
+  /** 正文引了、文献表里没有的编号 */
+  missing: number[]
+  /** 文献表里有、正文没引的条目（references 下标） */
+  uncited: number[]
+  /** 没按首次引用先后编号的编号 */
+  outOfOrder: number[]
+  /** 写法有误的标号原文 */
+  malformed: string[]
 }
 
 export const MAX_LOCATIONS = 5
