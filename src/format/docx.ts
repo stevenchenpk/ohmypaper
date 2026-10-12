@@ -151,6 +151,9 @@ function toggle(el: El | null): boolean | null {
   return v === null || !/^(0|false|off|none)$/i.test(v)
 }
 
+const MAX_ENTRIES = 5000
+const MAX_XML_BYTES = 150 * 1024 * 1024
+
 const TWIP_PER_CM = 1440 / 2.54
 
 // ---------- 格式属性（可部分定义，按层合并） ----------
@@ -420,15 +423,30 @@ function normalizeAlign(jc: string | null | undefined): Align {
 
 export function parseDocx(data: Uint8Array): DocxModel {
   let files: Record<string, Uint8Array>
+  let entries = 0
+  let xmlBytes = 0
   try {
-    // 只解压 XML 和关系表，图片等媒体文件用不到
-    files = unzipSync(data, { filter: (f) => /\.(xml|rels)$/.test(f.name) })
+    // 只解压 XML 和关系表，图片等媒体文件用不到；顺带限制成员数和解压总量，避免异常文件把页面卡死
+    files = unzipSync(data, {
+      filter: (f) => {
+        entries++
+        const wanted = /\.(xml|rels)$/.test(f.name)
+        if (wanted) xmlBytes += f.originalSize
+        return wanted && entries <= MAX_ENTRIES && xmlBytes <= MAX_XML_BYTES
+      },
+    })
   } catch {
     throw new DocxError('文件无法解压。请确认是 .docx 格式（不是 .doc 或 WPS 的 .wps），可以在 Word 或 WPS 里"另存为 docx"后再试。')
+  }
+  if (entries > MAX_ENTRIES || xmlBytes > MAX_XML_BYTES) {
+    throw new DocxError('这个文件的内部结构异常庞大（成员超过 5000 个或文字部分解压后超过 150 MB），不像普通论文，没有继续检查。')
   }
   const read = (path: string) => (files[path] ? parseXml(strFromU8(files[path])) : null)
   const document = read('word/document.xml')
   if (!document) throw new DocxError('这个文件里没有 Word 正文（word/document.xml），可能不是 docx 文件。')
+  if (document.documentElement.namespaceURI?.startsWith('http://purl.oclc.org/ooxml/')) {
+    throw new DocxError('这是"Strict Open XML"格式的 docx，暂不支持。请在 Word 里"另存为 → Word 文档 (*.docx)"后再试。')
+  }
 
   const styles = new Styles(read('word/styles.xml'))
   const theme = readTheme(read('word/theme/theme1.xml'))
@@ -506,7 +524,8 @@ export function parseDocx(data: Uint8Array): DocxModel {
     const runs: Run[] = []
     for (const r of descendants(p, 'r')) {
       // 删除的修订不算正文；文本框里的字不属于这一段
-      if (r.parentNode && (r.parentNode as El).localName === 'del') continue
+      // 删除和移动前（moveFrom）位置的文字都不在最终稿里
+      if (insideAny(r, p, DROPPED)) continue
       if (isInsideTextbox(r)) continue
       let text = ''
       for (let n = r.firstChild; n; n = n.nextSibling) {
@@ -517,7 +536,11 @@ export function parseDocx(data: Uint8Array): DocxModel {
       }
       if (!text) continue
       const rPr = child(r, 'rPr')
-      const rp = mergeRun(mergeRun(baseRun, styles.character(attr(child(rPr, 'rStyle'), 'val'))), readRunProps(rPr))
+      const charStyle = styles.character(attr(child(rPr, 'rStyle'), 'val'))
+      const direct = readRunProps(rPr)
+      const rp = mergeRun(mergeRun(baseRun, charStyle), direct)
+      // 加粗是切换属性（ECMA-376 §17.7.3）：段落样式和字符样式两层相互异或，直接格式是绝对值
+      rp.bold = direct.bold ?? (baseRun.bold === true) !== (charStyle.bold === true)
       if (rp.highlight) highlights++
       runs.push({
         text,
@@ -584,6 +607,7 @@ export function parseDocx(data: Uint8Array): DocxModel {
         }
         case 'customXml':
         case 'ins':
+        case 'moveTo':
           walk(el, ctx)
           break
       }
@@ -604,7 +628,8 @@ export function parseDocx(data: Uint8Array): DocxModel {
   return {
     paragraphs,
     sections,
-    trackedChanges: descendants(body, 'ins').length + descendants(body, 'del').length,
+    // 内容修订（插入、删除、移动）和格式修订都算"未处理的修订"
+    trackedChanges: REVISION_TAGS.reduce((n, tag) => n + descendants(body, tag).length, 0),
     comments: commentsDoc ? descendants(commentsDoc, 'comment').length : 0,
     highlights,
     authors: [...new Set(authors)],
@@ -639,6 +664,17 @@ function markTocField(document: Document, paragraphs: Paragraph[]) {
       if (depth <= 0) inToc = false
     }
   }
+}
+
+const DROPPED = new Set(['del', 'moveFrom'])
+const REVISION_TAGS = ['ins', 'del', 'moveFrom', 'moveTo', 'rPrChange', 'pPrChange', 'sectPrChange', 'tblPrChange', 'trPrChange', 'tcPrChange']
+
+/** el 在到达 stop 之前是否位于这些 W 元素之内 */
+function insideAny(el: El, stop: El, tags: Set<string>): boolean {
+  for (let n = el.parentNode as El | null; n && n !== stop; n = n.parentNode as El | null) {
+    if (n.namespaceURI === W && tags.has(n.localName)) return true
+  }
+  return false
 }
 
 function isInsideTextbox(p: El): boolean {
