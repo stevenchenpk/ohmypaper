@@ -53,6 +53,7 @@ describe('引用对账表的文字', () => {
     const map: CitationMap = {
       citations: [], missing: [], uncited: [0], outOfOrder: [], malformed: [],
       references: [{ number: 1, text: 'x', timesCited: 0, firstCited: null }],
+      uncertain: { unreadFieldParagraphs: 0, noteRefs: 0, ambiguous: [] },
     }
     expect(citationSummary(map)).toMatch(/没有识别出引用标注/)
     expect(citationRows(map)[0]).toMatchObject({ cited: '未检查', citedTone: 'open' })
@@ -65,7 +66,7 @@ function para(index: number, text: string, extra: Partial<Paragraph> = {}): Para
     index, text, styleId: null, styleName: null, headingLevel: null, inTable: false, inToc: false, numbered: false, listLabel: null,
     sectionIndex: 0, hasMath: false, align: 'justify', lineSpacing: { kind: 'multiple', value: 1.5 }, firstLineChars: 2, firstLinePt: null,
     spaceBefore: { lines: null, pt: 0 }, spaceAfter: { lines: null, pt: 0 },
-    runs: [{ text, fontEn: null, fontCn: null, sizePt: null, bold: false, superscript: false }], ...extra,
+    runs: [{ text, fontEn: null, fontCn: null, sizePt: null, bold: false, superscript: false }], fieldCodes: [], noteRefs: 0, ...extra,
   }
 }
 function model(refs: string[]): DocxModel {
@@ -77,7 +78,7 @@ function model(refs: string[]): DocxModel {
   return {
     paragraphs,
     sections: [{ index: 0, lastParagraph: paragraphs.length - 1, pageWidthCm: 21, pageHeightCm: 29.7, margins: null, pageNumberFormat: 'arabic', pageNumberStart: null, titlePage: false, mirrorMargins: false, header: null, footer: null, evenHeader: null, evenFooter: null }],
-    trackedChanges: 0, comments: 0, highlights: 0, authors: [], evenAndOddHeaders: false,
+    trackedChanges: 0, comments: 0, highlights: 0, authors: [], evenAndOddHeaders: false, footnotes: 0, endnotes: 0,
   }
 }
 
@@ -101,5 +102,23 @@ describe('重复的参考文献', () => {
     expect(r.issues.map((i) => i.id)).not.toContain('refs-duplicate')
     expect(r.passed.map((p) => p.item)).not.toContain('无重复条目')
     expect(r.skipped.find((s) => s.item === '无重复条目')?.reason).toMatch(/没拆出题名/)
+  })
+})
+
+describe('对账表里的未检查项', () => {
+  it('有脚注或读不出的域引用时，没识别到的条目不说"没有引用"', () => {
+    const map: CitationMap = {
+      citations: [{ numbers: [1] } as never], missing: [], uncited: [1], outOfOrder: [], malformed: [],
+      references: [
+        { number: 1, text: 'a', timesCited: 1, firstCited: null },
+        { number: 2, text: 'b', timesCited: 0, firstCited: null },
+      ],
+      uncertain: { unreadFieldParagraphs: 2, noteRefs: 3, ambiguous: [] },
+    }
+    expect(citationRows(map)[1]).toMatchObject({ cited: '没识别到引用，需人工确认', citedTone: 'open' })
+    const note = citationNotes(map).find((n) => n.startsWith('未检查，需人工确认'))!
+    expect(note).toContain('2 段')
+    expect(note).toContain('3 个脚注或尾注')
+    expect(note).toContain('不算通过')
   })
 })

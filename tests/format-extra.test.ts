@@ -6,7 +6,7 @@ import { tocEntryTitle } from '../src/format/checks/toc'
 /** 用最少的字段拼一个段落，其余取常见默认值 */
 function para(index: number, text: string, extra: Partial<Paragraph> = {}): Paragraph {
   return {
-    index, text, styleId: null, styleName: null, headingLevel: null, inTable: false, inToc: false, numbered: false, listLabel: null,
+    index, text, styleId: null, styleName: null, headingLevel: null, inTable: false, inToc: false, numbered: false, listLabel: null, fieldCodes: [], noteRefs: 0,
     sectionIndex: 0, hasMath: false, align: 'justify', lineSpacing: { kind: 'multiple', value: 1.5 }, firstLineChars: 2, firstLinePt: null,
     spaceBefore: { lines: null, pt: 0 }, spaceAfter: { lines: null, pt: 0 },
     runs: [{ text, fontEn: 'Times New Roman', fontCn: '宋体', sizePt: 12, bold: false, superscript: false }],
@@ -19,7 +19,7 @@ function model(specs: [string, Partial<Paragraph>?][]): DocxModel {
   return {
     paragraphs,
     sections: [{ index: 0, lastParagraph: paragraphs.length - 1, pageWidthCm: 21, pageHeightCm: 29.7, margins: null, pageNumberFormat: 'arabic', pageNumberStart: null, titlePage: false, mirrorMargins: false, header: null, footer: { text: '1', hasPageField: true, pageFieldAlign: 'center' }, evenHeader: null, evenFooter: null }],
-    trackedChanges: 0, comments: 0, highlights: 0, authors: [], evenAndOddHeaders: false,
+    trackedChanges: 0, comments: 0, highlights: 0, authors: [], evenAndOddHeaders: false, footnotes: 0, endnotes: 0,
   }
 }
 

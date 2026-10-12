@@ -7,7 +7,7 @@ import { type DocxModel, parseDocx } from './docx'
 import type { SchoolProfile } from './profile'
 import { profileLabel } from './profile'
 import type { CitationMap, Report, Severity } from './report'
-import { reconcileCitations } from './citations'
+import { inferCitationStyle, reconcileCitations } from './citations'
 import { CheckContext } from './checks/context'
 import { checkCaptions } from './checks/captions'
 import { checkCleanup } from './checks/cleanup'
@@ -76,7 +76,7 @@ export function checkModel(doc: DocxModel, profile: SchoolProfile | null): Repor
     },
     references: s.refEntries.map(referenceText),
     // 只对顺序编码制做对账；学校要求 APA 等其他格式时不做
-    citationMap: (profile?.references?.style ?? 'numeric') === 'numeric' && !/^(APA-7|other)$/.test(profile?.references?.standard ?? '') && s.refHeading !== null
+    citationMap: inferCitationStyle(doc, s, profile?.references?.style).style === 'numeric' && !/^(APA-7|other)$/.test(profile?.references?.standard ?? '') && s.refHeading !== null
       ? citationMap(doc, s)
       : null,
   }
@@ -95,5 +95,10 @@ function citationMap(doc: DocxModel, s: Structure): CitationMap {
     uncited: r.uncited,
     outOfOrder: r.outOfOrder.map((o) => o.number),
     malformed: r.malformed.map((c) => c.raw),
+    uncertain: {
+      unreadFieldParagraphs: r.uncertain.unreadFieldParagraphs,
+      noteRefs: r.uncertain.noteRefs,
+      ambiguous: r.uncertain.ambiguous.map((c) => ({ raw: c.raw, numbers: c.numbers, location: at(c.paragraph), superscript: true, bare: true })),
+    },
   }
 }

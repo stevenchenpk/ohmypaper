@@ -10,7 +10,7 @@ import { parseGbt7714 } from '../../references/structured'
 import { yearOf } from '../../references/structured/types'
 import { type Edition, RULES, analyzeEntry, checkEntry } from '../../references/style/gbt7714'
 import type { SchoolProfile } from '../profile'
-import { entryNumber, reconcileCitations } from '../citations'
+import { type CitationReconciliation, entryNumber, inferCitationStyle, reconcileCitations } from '../citations'
 import { locate, norm, shownText } from '../structure'
 import { type CheckContext, unknownNote } from './context'
 import { checkTextStyle } from './textStyle'
@@ -42,7 +42,11 @@ export function checkReferences(ctx: CheckContext) {
   const refRule = profile?.references
   const edition = editionFor(profile)
   const basis = editionLabel(edition, profile)
-  const style = refRule?.style ?? 'numeric'
+  // 档案没写体例时按文档判断；判断为著者-出版年制的，不按顺序编码制查序号和对账
+  const { style, inferred } = inferCitationStyle(ctx.doc, s, refRule?.style)
+  const AUTHOR_YEAR_NOTE = inferred
+    ? '学校档案没写引用体例；文献表没有序号、正文是"作者, 年份"的写法，按著者-出版年制处理，顺序编码制对账不适用'
+    : '著者-出版年制不检查引用顺序'
 
   if (refRule?.standard === 'APA-7' || refRule?.standard === 'other') {
     ctx.skip('references', '参考文献格式', `学校要求 ${refRule.standard}，目前只支持 GB/T 7714`)
@@ -64,7 +68,8 @@ export function checkReferences(ctx: CheckContext) {
 
   // 序号
   const numbers = entries.map(entryNumber)
-  if (style === 'numeric') {
+  if (style !== 'numeric') ctx.skip('references', '参考文献序号', AUTHOR_YEAR_NOTE)
+  else {
     const dotted = entries.filter((p) => !MANUAL_NO.test(shownText(p)) && DOTTED_NO.test(shownText(p)))
     const missing = entries.filter((p, i) => numbers[i] === null && !dotted.includes(p))
     if (dotted.length) {
@@ -160,13 +165,24 @@ export function checkReferences(ctx: CheckContext) {
   if (entryRule) checkTextStyle(ctx, { category: 'references', label: '参考文献条目', id: 'refs-style', paragraphs: entries, rule: entryRule })
 
   if (style === 'numeric') checkCitations(ctx, basis)
-  else ctx.skip('references', '正文引用顺序', '著者-出版年制不检查引用顺序')
+  else ctx.skip('references', '正文引用与文献表对账', AUTHOR_YEAR_NOTE)
+}
+
+/** 可能漏读引用的原因；空串表示没有 */
+function uncertainReason(r: CitationReconciliation): string {
+  const u = r.uncertain
+  const parts: string[] = []
+  if (u.unreadFieldParagraphs) parts.push(`${u.unreadFieldParagraphs} 段用文献管理软件（Zotero、EndNote、NoteExpress 等）插入的引用没有显示成 [1] 这样的标号`)
+  if (u.noteRefs) parts.push(`正文里有 ${u.noteRefs} 个脚注或尾注，脚注里的引用读不到`)
+  if (u.ambiguous.length) parts.push(`${u.ambiguous.length} 处跟在英文字母后面的上标数字（如"${u.ambiguous[0].raw}"）分不清是引用还是指数`)
+  return parts.join('；')
 }
 
 function checkCitations(ctx: CheckContext, basis: string) {
   const { doc, s } = ctx
   const r = reconcileCitations(doc, s)
   const at = (ci: number) => doc.paragraphs[r.citations[ci].paragraph]
+  const unsure = uncertainReason(r)
 
   if (r.malformed.length) {
     ctx.add({
@@ -176,7 +192,8 @@ function checkCitations(ctx: CheckContext, basis: string) {
     })
   }
   if (r.citations.length === 0) {
-    if (!r.malformed.length) {
+    if (unsure) ctx.skip('references', '正文引用与文献表对账', `没有读到 [1] 这样的引用标号，${unsure}，需人工核对`)
+    else if (!r.malformed.length) {
       ctx.add({
         id: 'cite-none', category: 'references', severity: 'info', title: '正文中没有找到 [1] 这样的引用标注',
         detail: '如果你用的是交叉引用或上标数字，检查可能识别不到；如果用的是著者-出版年制，可以忽略这一条。', basis,
@@ -203,12 +220,17 @@ function checkCitations(ctx: CheckContext, basis: string) {
     })
   }
 
+  // 有没读到的引用时：没被引用的条目可能在脚注或软件域里引了，只提示核对；两项都不能算通过
   if (r.uncited.length) {
     ctx.addForParagraphs(r.uncited.map((i) => s.refEntries[i]), {
-      id: 'cite-uncited', category: 'references', severity: 'warning', title: `${r.uncited.length} 条参考文献在正文中没有被引用`,
-      detail: '列入参考文献的每一条都应在正文中引用。如果正文用的是交叉引用（自动更新的编号），这里可能误报。', basis,
+      id: 'cite-uncited', category: 'references', severity: unsure ? 'info' : 'warning', title: `${r.uncited.length} 条参考文献在正文中没有找到引用`,
+      detail: unsure
+        ? `可能有引用没读到：${unsure}。请核对这几条是否确实被引用。`
+        : '列入参考文献的每一条都应在正文中引用。如果正文用的是交叉引用（自动更新的编号），这里可能误报。',
+      basis,
     })
-  } else ctx.pass('references', '每条文献都被引用')
+  } else if (unsure) ctx.skip('references', '每条文献都被引用', `${unsure}，需人工确认`)
+  else ctx.pass('references', '每条文献都被引用')
 
   if (r.outOfOrder.length) {
     const first = r.outOfOrder[0].number
@@ -217,7 +239,8 @@ function checkCitations(ctx: CheckContext, basis: string) {
       detail: `顺序编码制要求按文献在正文中第一次出现的顺序编号。例如 [${first}] 在 [${first - 1}] 之前就出现了。`,
       locations: r.outOfOrder.map((o) => locate(at(o.citation), s)), basis,
     })
-  } else ctx.pass('references', '引用顺序')
+  } else if (unsure) ctx.skip('references', '引用顺序', `${unsure}，需人工确认`)
+  else ctx.pass('references', '引用顺序')
 }
 
 /** 题名比较用：去掉空白、标点和大小写差别 */

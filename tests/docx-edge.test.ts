@@ -61,3 +61,23 @@ describe('加粗是切换属性', () => {
     expect(d.paragraphs[0].runs.map((r) => r.bold)).toEqual([false, true, true])
   })
 })
+
+describe('域代码和脚注', () => {
+  it('读出拆在几个 run 里的域指令、fldSimple、脚注引用和脚注条数', () => {
+    const fld = (t: string) => `<w:r><w:fldChar w:fldCharType="${t}"/></w:r>`
+    const instr = (t: string) => `<w:r><w:instrText xml:space="preserve">${t}</w:instrText></w:r>`
+    const footnotes = `<w:footnotes xmlns:w="${W}"><w:footnote w:type="separator" w:id="-1"/><w:footnote w:type="continuationSeparator" w:id="0"/>` +
+      `<w:footnote w:id="1"><w:p>${run('张三. 甲.')}</w:p></w:footnote><w:footnote w:id="2"><w:p>${run('李四. 乙.')}</w:p></w:footnote></w:footnotes>`
+    const d = parseDocx(docx(
+      `<w:p>${run('研究')}${fld('begin')}${instr(' ADDIN ZOTERO_ITEM ')}${instr('CSL_CITATION {}')}${fld('separate')}${run('（张三, 2024）')}${fld('end')}` +
+      `<w:r><w:footnoteReference w:id="1"/></w:r><w:fldSimple w:instr=" REF _Ref1 \\r \\h ">${run('[2]')}</w:fldSimple></w:p>`,
+      { 'word/footnotes.xml': footnotes },
+    ))
+    const p = d.paragraphs[0]
+    expect(p.fieldCodes).toEqual(['ADDIN ZOTERO_ITEM CSL_CITATION {}', 'REF _Ref1 \\r \\h'])
+    expect(p.noteRefs).toBe(1)
+    expect(p.text).toBe('研究（张三, 2024）[2]')
+    expect(d.footnotes).toBe(2)
+    expect(d.endnotes).toBe(0)
+  })
+})

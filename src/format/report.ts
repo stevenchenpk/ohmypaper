@@ -107,6 +107,15 @@ export interface CitationMap {
   outOfOrder: number[]
   /** 写法有误的标号原文 */
   malformed: string[]
+  /** 可能有没读到的引用；任何一项非零时，"都被引用""顺序正确"都不能显示为通过 */
+  uncertain: {
+    /** 有文献管理软件（Zotero、EndNote、NoteExpress 等）引用域、却没读出标号的段落数 */
+    unreadFieldParagraphs: number
+    /** 正文和附录里的脚注、尾注引用标记个数 */
+    noteRefs: number
+    /** 跟在拉丁字母后面、分不清是引用还是指数的上标数字 */
+    ambiguous: CitationLink[]
+  }
 }
 
 export const MAX_LOCATIONS = 5

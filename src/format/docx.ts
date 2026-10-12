@@ -63,6 +63,10 @@ export interface Paragraph {
   runs: Run[]
   /** 含 Office 公式（m:oMath）；公式里的字不在 text 里 */
   hasMath: boolean
+  /** 本段开始的域的指令，如 "ADDIN ZOTERO_ITEM CSL_CITATION {...}"、"REF _Ref123 \\r \\h"（截短到 200 字） */
+  fieldCodes: string[]
+  /** 本段里的脚注、尾注引用标记个数 */
+  noteRefs: number
 }
 
 export interface HeaderFooter {
@@ -102,6 +106,9 @@ export interface DocxModel {
   /** 文档属性里的作者、最后修改者 */
   authors: string[]
   evenAndOddHeaders: boolean
+  /** 脚注、尾注条数（不含分隔符） */
+  footnotes: number
+  endnotes: number
 }
 
 export class DocxError extends Error {}
@@ -536,6 +543,29 @@ export function parseDocx(data: Uint8Array): DocxModel {
     const styleName = styleId ? styles.byId.get(styleId)?.name ?? null : null
 
     const runs: Run[] = []
+    const fieldCodes: string[] = []
+    let noteRefs = 0
+    let code: string | null = null
+    for (const r of descendants(p, 'r')) {
+      if (insideAny(r, p, DROPPED) || isInsideTextbox(r)) continue
+      // 域指令：begin 之后、separate 之前的 instrText 拼起来
+      for (let n = r.firstChild; n; n = n.nextSibling) {
+        if (n.nodeType !== 1 || (n as El).namespaceURI !== W) continue
+        const ln = (n as El).localName
+        if (ln === 'fldChar') {
+          const t = attr(n as El, 'fldCharType')
+          if (t === 'begin') code = ''
+          else if (code !== null) {
+            fieldCodes.push(code.trim().slice(0, 200))
+            code = null
+          }
+        } else if (ln === 'instrText' && code !== null) code += n.textContent ?? ''
+        else if (ln === 'footnoteReference' || ln === 'endnoteReference') noteRefs++
+      }
+    }
+    if (code !== null && code.trim()) fieldCodes.push(code.trim().slice(0, 200))
+    for (const f of descendants(p, 'fldSimple')) if (!insideAny(f, p, DROPPED)) fieldCodes.push((attr(f, 'instr') ?? '').trim().slice(0, 200))
+
     for (const r of descendants(p, 'r')) {
       // 删除的修订不算正文；文本框里的字不属于这一段
       // 删除和移动前（moveFrom）位置的文字都不在最终稿里
@@ -605,6 +635,8 @@ export function parseDocx(data: Uint8Array): DocxModel {
       spaceAfter: { lines: pp.afterLines !== undefined ? pp.afterLines / 100 : null, pt: (pp.after ?? 0) / 20 },
       runs,
       hasMath: descendants(p, 'oMath', M).length > 0 || descendants(p, 'oMathPara', M).length > 0,
+      fieldCodes,
+      noteRefs,
     })
 
     const sectPr = child(pPr, 'sectPr')
@@ -647,6 +679,11 @@ export function parseDocx(data: Uint8Array): DocxModel {
     ? [...descendants(core, 'creator', DC), ...descendants(core, 'lastModifiedBy', CP)].map((e) => (e.textContent ?? '').trim()).filter(Boolean)
     : []
   const commentsDoc = read('word/comments.xml')
+  // 脚注/尾注文件里 id 为 -1、0 的是分隔线，不算
+  const notes = (path: string, tag: string) => {
+    const d = read(path)
+    return d ? descendants(d, tag).filter((n) => !attr(n, 'type') || attr(n, 'type') === 'normal').length : 0
+  }
 
   return {
     paragraphs,
@@ -657,6 +694,8 @@ export function parseDocx(data: Uint8Array): DocxModel {
     highlights,
     authors: [...new Set(authors)],
     evenAndOddHeaders,
+    footnotes: notes('word/footnotes.xml', 'footnote'),
+    endnotes: notes('word/endnotes.xml', 'endnote'),
   }
 }
 
