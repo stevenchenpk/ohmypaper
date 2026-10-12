@@ -14,11 +14,15 @@ const TYPE_TAG_RE = /\[([A-Z]{1,2})(?:\/([A-Z]{2}))?\]/
 const URL_RE = /https?:\/\/[^\s]+/g
 const DOI_RE = /(?:DOI\s*:\s*)?(10\.\d{4,9}\/[^\s]+)/i
 const CITED_DATE_RE = /\[(\d{4}-\d{1,2}(?:-\d{1,2})?)\]/
-const STANDARD_NO_RE =
-  /^((?:GB\/[TZ]|GB|GJB|[A-Z]{2}\/T|ISO(?:\/IEC)?|IEC(?:\/IEEE)?|IEEE|ASTM|ANSI|DIN|EN|BS|JIS)\s?[A-Z]?\s?\d+(?:\.\d+)*(?:-\d+)?\s?[—–\-:]\s?\d{4})\s*/
+/**
+ * 标准编号：发布机构代号 + 编号 + 年份，如 GB/T 3792—2021、NB/T 10386—2020、ISO 21378:2019、
+ * IEC/IEEE 61636-1:2021、IEEE P802.11ba/D8.0-2020、AIAA G-136-2022、ISO/IEC 80079-20-2:2016(en)。
+ * 第 2 组是年份。
+ */
+const STANDARD_NO_RE = /^((?:GB|GJB|[A-Z]{2,6})(?:\/[A-Z]{1,6})*\s?[^\s]*?\d[^\s]*?\s?[—–\-:]\s?(\d{4})(?:\([a-z]{2}\))?)(?=\s|$)\s*/
 /** 标准号出现在题名后的其他题名信息里（2015 版写法） */
 const STANDARD_NO_ANY_RE =
-  /((?:GB\/[TZ]|GB|GJB|[A-Z]{2}\/T|ISO(?:\/IEC)?|IEC|IEEE|ASTM)\s?[A-Z]?\s?\d+(?:\.\d+)*(?:-\d+)?\s?[—–\-]\s?\d{4})/
+  /((?:GB\/[TZ]|GB|GJB|[A-Z]{2}\/T|ISO(?:\/IEC)?|IEC|IEEE|ASTM)\s?[A-Z]?\s?\d+(?:\.\d+)*(?:-\d+)?\s?[—–\-]\s?(\d{4}))/
 const EDITION_RE = /^(\d+\s*版|[一二三四五六七八九十]+版|修订版|\d+(?:st|nd|rd|th)\s*ed|Rev\.?\s*ed|[A-Za-z]+\s*ed)$/i
 const OTHER_RESP_RE = /^(.+?)\s*,?\s*(译|编译|译注|校注|注|校|编|主编|改编|整理|等译|trans|tr|ed|eds)$/i
 /** 出版项：地:出版者,年[:页码]；年也可以是完整日期 */
@@ -85,7 +89,7 @@ function takeOnline(tail: string): Online {
     rest = rest.replace(cited[0], ' ')
   }
   let parenDate: string | undefined
-  const paren = rest.match(/\((\d{4}-\d{1,2}(?:-\d{1,2})?)\)/)
+  const paren = rest.match(/\((\d{4}(?:-\d{1,2}(?:-\d{1,2})?)?)\)/)
   if (paren) {
     parenDate = paren[1]
     rest = rest.slice(0, paren.index) + rest.slice((paren.index ?? 0) + paren[0].length)
@@ -94,9 +98,15 @@ function takeOnline(tail: string): Online {
 }
 
 /** 拆"作者.题名"；没有句点时整段是题名（无责任者，或标准文献以编号开头） */
-function splitHead(head: string): { authors: string | null; title: string } {
+function splitHead(head: string, typeCode: string | null): { authors: string | null; title: string } {
   const h = stripEndPunct(head)
-  if (STANDARD_NO_RE.test(h)) return { authors: null, title: h }
+  if (typeCode === 'S' && STANDARD_NO_RE.test(h)) return { authors: null, title: h }
+  // U.S.、U.K. 这类缩写里的句点不是作者与题名的分界
+  const abbr = h.match(/^(?:[A-Z]\.){2,}\s*/)
+  if (abbr) {
+    const rest = splitHead(h.slice(abbr[0].length), typeCode)
+    return rest.authors !== null ? { authors: abbr[0] + rest.authors, title: rest.title } : { authors: null, title: h }
+  }
   // 第一个句点：前面不是数字或后面不是数字（避开 2.0、3.1 这类）
   const m = h.match(/^(.+?)(?:(?<!\d)\.|\.(?!\d))\s*(.+)$/)
   if (!m) return { authors: null, title: h }
@@ -125,6 +135,12 @@ function applyPublication(seg: string, item: CslItem, warnings: string[]): boole
     item.issued = dateFrom(py[2])
     if (py[3]) item.page = py[3].trim()
     warnings.push('出版项缺出版地')
+    return true
+  }
+  // 报告、档案等联机资源只写完整日期：".2012-01-16."
+  const dateOnly = seg.match(/^(\d{4}-\d{1,2}-\d{1,2})$/)
+  if (dateOnly) {
+    item.issued = dateFrom(dateOnly[1])
     return true
   }
   const yearOnly = seg.match(/^(\d{4})(?:\s*:\s*(.+))?$/)
@@ -189,6 +205,23 @@ function parseJournalTail(rest: string, item: CslItem, warnings: string[]) {
   if (!m[5]) warnings.push('期刊文献缺页码')
 }
 
+/** 连续出版物整体："[J].1984,1(1)-.武汉:……,1984" 或 "[J].1957(1)-1990(4).北京:……" */
+const SERIAL_RE = /^\d{4}\s*(?:,\s*[^(.]*?)?\(\d+\)\s*-\s*(?:\d{4}\s*(?:,\s*[^(.]*?)?\(\d+\))?\s*(?:\.|$)/
+
+function parseSerialTail(rest: string, item: CslItem, warnings: string[]) {
+  item.type = 'periodical'
+  const m = rest.match(SERIAL_RE)!
+  item.issued = dateFrom(m[0].slice(0, 4))
+  const pub = rest.slice(m[0].length).trim()
+  if (pub) {
+    const p = pub.match(/^(.+?)\s*:\s*(.+?)\s*,\s*\d{4}/)
+    if (p) {
+      item['publisher-place'] = p[1].trim()
+      item.publisher = p[2].trim()
+    } else warnings.push(`未识别的著录项：${pub}`)
+  }
+}
+
 /** 析出文献 "//" 之后的部分：专著主要责任者.专著题名.出版项，或会议名称,年份:页码 */
 function parseParent(parent: string, item: CslItem, warnings: string[]) {
   const segs = splitSegments(parent)
@@ -234,14 +267,17 @@ export function parseGbt7714(entry: string, fallbackIndex: number | null = null)
 
   // 析出文献
   let parent: string | null = null
-  const slash = tail.match(/^\s*\/\/\s*(.*)$/)
+  // 析出文献；"//"前可能有析出部分的译者："[M].姜海伦,译//《环球科学》杂志社.……"
+  let chapterTranslator: string | null = null
+  const slash = tail.match(/^\s*(?:\.\s*(.+?)\s*,\s*(?:译|编译)\s*)?\/\/\s*(.*)$/)
   if (slash) {
-    parent = slash[1]
+    chapterTranslator = slash[1] ?? null
+    parent = slash[2]
     tail = ''
   }
 
   const online = takeOnline(parent ?? tail)
-  const { authors: authorSeg, title: titleRaw } = splitHead(head)
+  const { authors: authorSeg, title: titleRaw } = splitHead(head, typeCode)
   const auth = names(authorSeg)
   let title = titleRaw
 
@@ -250,6 +286,7 @@ export function parseGbt7714(entry: string, fallbackIndex: number | null = null)
 
   if (parent !== null) {
     csl.type = typeCode === 'C' ? 'paper-conference' : 'chapter'
+    if (chapterTranslator) csl.translator = parseNameList(chapterTranslator).names
     parseParent(online.rest, csl, warnings)
   } else if (!tag) {
     const segs = splitSegments(online.rest)
@@ -257,7 +294,8 @@ export function parseGbt7714(entry: string, fallbackIndex: number | null = null)
   } else {
     switch (typeCode) {
       case 'J':
-        parseJournalTail(online.rest, csl, warnings)
+        if (SERIAL_RE.test(online.rest)) parseSerialTail(online.rest, csl, warnings)
+        else parseJournalTail(online.rest, csl, warnings)
         break
       case 'N': {
         const n = online.rest.match(/^(.+?)\s*,\s*(\d{4}-\d{1,2}-\d{1,2})\s*(?:\(([^)]+)\))?$/)
@@ -291,11 +329,13 @@ export function parseGbt7714(entry: string, fallbackIndex: number | null = null)
         const lead = title.match(STANDARD_NO_RE)
         if (lead) {
           csl.number = lead[1].trim()
+          csl.issued = dateFrom(lead[2])
           title = title.slice(lead[0].length).trim()
         } else {
           const any = title.match(STANDARD_NO_ANY_RE)
           if (any) {
             csl.number = any[1].trim()
+            if (!csl.issued) csl.issued = dateFrom(any[2])
             title = stripEndPunct(title.replace(any[0], '').replace(/:\s*$/, '').replace(/:\s*:/, ':'))
           } else warnings.push('未找到标准编号')
         }
@@ -303,10 +343,19 @@ export function parseGbt7714(entry: string, fallbackIndex: number | null = null)
         if (online.rest) parseBookTail(online.rest, csl, warnings)
         break
       }
-      default:
+      default: {
+        // 报告编号、档案号写在题名后："……最终报告:7178999X-2006BAK04A10/10.2013[R]"
+        if (typeCode === 'R' || typeCode === 'A') {
+          const no = title.match(/^(.+?)\s*:\s*([A-Za-z0-9][A-Za-z0-9\-\/. ]*\d[A-Za-z0-9\-\/.]*)$/)
+          if (no) {
+            title = no[1].trim()
+            csl.number = no[2].trim()
+          }
+        }
         parseBookTail(online.rest, csl, warnings)
         if (typeCode === 'D') csl.genre = '学位论文'
         if (typeCode === 'D' && csl.publisher === undefined) warnings.push('学位论文缺授予单位')
+      }
     }
     // 网页、数据集等的 (日期) 已在 takeOnline 中取出；其他类型若有，作为出版日期的补充
     if (online.parenDate && !csl.issued) csl.issued = dateFrom(online.parenDate)
