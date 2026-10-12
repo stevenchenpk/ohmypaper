@@ -2,7 +2,7 @@
  * 中文参考文献结构化解析的入口：自动区分知网导出题录和手写的 GB/T 7714 列表。
  *
  * 输出字段沿用 CSL-JSON 的命名，只是数据格式，不依赖 citeproc-js（其许可为 CPAL/AGPL）。
- * 现有中文 CSL 样式多停在 GB/T 7714—2015，按 2025 版排版时不要直接套用。
+ * 需要按 GB/T 7714—2025 排版时，zotero-chinese/styles 已有 2025 版 CSL 样式（CC BY-SA）可参考。
  */
 
 import { splitReferenceList } from '../parse'
