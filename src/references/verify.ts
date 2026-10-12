@@ -17,6 +17,8 @@ import {
   manualSearchLinks,
   openAlexSearch,
   resolveDoi,
+  doiRegistrar,
+  RA_LABELS,
 } from './sources'
 
 export type VerifyStatus =
@@ -222,7 +224,14 @@ interface SearchOutcome {
 }
 
 async function search(ref: ParsedReference, opts: SourceOptions): Promise<SearchOutcome> {
-  const [cr, oa] = await Promise.allSettled([crossrefSearch(ref.raw, opts), openAlexSearch(ref.title ?? ref.raw, opts)])
+  // 先查 Crossref；Crossref 没有足够接近的记录或出错时才查 OpenAlex。
+  // OpenAlex 不带 key 每天只有约 100 次搜索额度，能省则省。
+  const cr = await settle(crossrefSearch(ref.raw, opts))
+  const crTop = cr.status === 'fulfilled' ? best(ref, cr.value) : null
+  if (crTop && crTop.sim >= THRESHOLDS.verified) {
+    return { top: crTop, allFailed: false, partial: false, rateLimited: false }
+  }
+  const oa = await settle(openAlexSearch(ref.title ?? ref.raw, opts))
   const candidates = [
     ...(cr.status === 'fulfilled' ? cr.value : []),
     ...(oa.status === 'fulfilled' ? oa.value : []),
@@ -234,6 +243,8 @@ async function search(ref: ParsedReference, opts: SourceOptions): Promise<Search
     rateLimited: [cr, oa].some((x) => x.status === 'rejected' && x.reason instanceof SourceError && x.reason.rateLimited),
   }
 }
+
+const settle = async <T>(p: Promise<T>): Promise<PromiseSettledResult<T>> => (await Promise.allSettled([p]))[0]
 
 /** 检索不到时的结论：网络不完整不下结论，图书报告类转人工，其余才是"查无此文" */
 function notFound(ref: ParsedReference, s: SearchOutcome, reason: string): VerifyResult {
@@ -258,25 +269,7 @@ function notFound(ref: ParsedReference, s: SearchOutcome, reason: string): Verif
 
 async function verifyByDoi(ref: ParsedReference, opts: SourceOptions): Promise<VerifyResult> {
   const work = await resolveDoi(ref.doi!, opts)
-  if (!work) {
-    if (ref.isChinese) {
-      return result(ref, 'manual', '这个 DOI 不在 Crossref 和 DataCite 中。中文期刊的 DOI 常由其他机构注册，请到知网或万方核对。')
-    }
-    if (!ref.title) {
-      return result(ref, 'not_found', `DOI ${ref.doi} 不存在，也没能解析出标题。这是虚构文献的常见特征，请务必核对。`)
-    }
-    // DOI 不存在时按标题再找一次：抄错 DOI 的真文献很常见，不能直接判假
-    const s = await search(ref, opts)
-    if (s.allFailed) return result(ref, 'error', '两个学术库都暂时无法访问，请稍后重试。')
-    if (s.top && s.top.sim >= THRESHOLDS.related) {
-      const fix = s.top.work.doi ? `正确的 DOI 应该是 ${s.top.work.doi}。` : ''
-      const verdict = judge(ref, s.top)
-      const rest = verdict.status === 'verified' ? '' : verdict.reason
-      return result(ref, 'mismatch', `DOI ${ref.doi} 不存在，但按标题找到了这篇文献，可能是 DOI 抄错了。${fix}${rest}`, s.top.work, s.top.sim)
-    }
-    return notFound(ref, s, `DOI ${ref.doi} 不存在，按标题在 Crossref 和 OpenAlex 中也找不到。这是虚构文献的常见特征，请务必核对。`)
-  }
-
+  if (!work) return verifyUnresolvedDoi(ref, opts)
   const sim = titleScore(ref, work.title)
   if (!ref.title && sim < THRESHOLDS.verified) {
     return result(ref, 'mismatch', `DOI 有效，但它指向的是《${work.title}》，条目里找不到这个标题。可能借用了别的文献的 DOI，请核对。`, work, sim)
@@ -285,6 +278,58 @@ async function verifyByDoi(ref: ParsedReference, opts: SourceOptions): Promise<V
     return result(ref, 'mismatch', `DOI 有效，但它指向的是另一篇文献《${work.title}》。DOI 与标题不匹配。`, work, sim)
   }
   return judge(ref, { work, sim }, true)
+}
+
+/**
+ * Crossref 和 DataCite 都没有这个 DOI。先问 doi.org 它到底存不存在：
+ * 很多中文期刊的 DOI 由知网（CNKI）或万方（ISTIC）注册，日韩期刊由 JaLC、KISTI 注册，
+ * 这些 DOI 真实存在，只是不在我们能查的库里，不能说成"虚构"。
+ */
+async function verifyUnresolvedDoi(ref: ParsedReference, opts: SourceOptions): Promise<VerifyResult> {
+  const doi = ref.doi!
+  const ra = await doiRegistrar(doi, opts)
+  const doiLink = { label: 'doi.org 打开这个 DOI', url: `https://doi.org/${doi}` }
+  const searchLinks = manualSearchLinks(ref.title ?? ref.raw.slice(0, 80))
+
+  if (ra && ra !== 'missing') {
+    return result(
+      ref,
+      'manual',
+      `这个 DOI 由${RA_LABELS[ra] ?? ra}注册，不在 Crossref 和 DataCite 里，本工具没法自动比对标题和作者。请点开 DOI 链接，核对它指向的是不是这篇文献。`,
+      null,
+      null,
+      [doiLink, ...searchLinks],
+    )
+  }
+  if (ra === null) {
+    // 没问到注册机构：不能说 DOI 不存在。按标题找一次，找到了就提示 DOI 可能抄错，找不到交给人工
+    const unsure = 'Crossref 和 DataCite 里都没有这个 DOI，也没能向 doi.org 确认它是否存在（查询没有响应）。中文、日韩期刊的 DOI 常由其他机构注册，不能据此判断是假的。'
+    if (!ref.isChinese && ref.title) {
+      const s = await search(ref, opts)
+      if (s.top && s.top.sim >= THRESHOLDS.related && s.top.work.doi && s.top.work.doi !== doi.toLowerCase()) {
+        return result(ref, 'mismatch', `${unsure}按标题找到的记录 DOI 是 ${s.top.work.doi}，和条目里的不一样，可能是 DOI 抄错了，请核对。`, s.top.work, s.top.sim, [doiLink, ...searchLinks])
+      }
+    }
+    return result(ref, 'manual', `${unsure}请点开 DOI 链接核对。`, null, null, [doiLink, ...searchLinks])
+  }
+
+  // doi.org 明确说 DOI 不存在
+  if (ref.isChinese) {
+    return result(ref, 'mismatch', `doi.org 显示 DOI ${doi} 不存在。可能是 DOI 抄错了，也可能是编造的，请到知网或万方核对这篇文献和它的 DOI。`, null, null, searchLinks)
+  }
+  if (!ref.title) {
+    return result(ref, 'not_found', `DOI ${doi} 不存在，也没能解析出标题。这是虚构文献的常见特征，请务必核对。`)
+  }
+  // DOI 不存在时按标题再找一次：抄错 DOI 的真文献很常见，不能直接判假
+  const s = await search(ref, opts)
+  if (s.allFailed) return result(ref, 'error', '两个学术库都暂时无法访问，请稍后重试。')
+  if (s.top && s.top.sim >= THRESHOLDS.related) {
+    const fix = s.top.work.doi ? `正确的 DOI 应该是 ${s.top.work.doi}。` : ''
+    const verdict = judge(ref, s.top)
+    const rest = verdict.status === 'verified' ? '' : verdict.reason
+    return result(ref, 'mismatch', `DOI ${doi} 不存在，但按标题找到了这篇文献，可能是 DOI 抄错了。${fix}${rest}`, s.top.work, s.top.sim)
+  }
+  return notFound(ref, s, `DOI ${doi} 不存在，按标题在 Crossref 和 OpenAlex 中也找不到。这是虚构文献的常见特征，请务必核对。`)
 }
 
 async function verifyBySearch(ref: ParsedReference, opts: SourceOptions): Promise<VerifyResult> {

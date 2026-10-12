@@ -192,6 +192,43 @@ export async function resolveDoi(doi: string, opts: SourceOptions = {}): Promise
   return (await crossrefByDoi(doi, opts)) ?? (await dataciteByDoi(doi, opts))
 }
 
+/* ---------- doi.org 注册机构查询 ---------- */
+
+/** 注册机构的中文说法，用在提示里 */
+export const RA_LABELS: Record<string, string> = {
+  CNKI: '知网（CNKI）',
+  ISTIC: '中国科技信息研究所（ISTIC，万方）',
+  JaLC: '日本 JaLC',
+  KISTI: '韩国 KISTI',
+  mEDRA: '欧洲 mEDRA',
+  Airiti: '台湾华艺（Airiti）',
+  'OP': '欧盟出版局（OP）',
+  EIDR: 'EIDR',
+  Crossref: 'Crossref',
+  DataCite: 'DataCite',
+}
+
+/**
+ * 问 doi.org 这个 DOI 归哪家机构注册。
+ * 返回机构名（如 "CNKI"）；'missing' 表示 doi.org 明确说 DOI 不存在；
+ * null 表示没问到（网络、跨域或返回格式不认识），调用方不能据此下"不存在"的结论。
+ * 只发送 DOI 本身。
+ */
+export async function doiRegistrar(doi: string, opts: SourceOptions = {}): Promise<string | 'missing' | null> {
+  try {
+    const res = await fetcherOf(opts)(`https://doi.org/ra/${encodeURIComponent(doi)}`)
+    if (!res.ok) return null
+    const body = (await res.json()) as { RA?: string; status?: string }[]
+    const first = Array.isArray(body) ? body[0] : undefined
+    if (!first) return null
+    if (typeof first.RA === 'string' && first.RA.length > 0) return first.RA
+    if (typeof first.status === 'string' && /does not exist/i.test(first.status)) return 'missing'
+    return null
+  } catch {
+    return null
+  }
+}
+
 /* ---------- OpenAlex ---------- */
 
 interface OpenAlexWork {
