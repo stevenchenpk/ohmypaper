@@ -1,0 +1,1553 @@
+[
+ {
+  "id": "gbt7714.b.1:1",
+  "text": "张伯伟. 全唐五代诗格汇考[M]. 南京：江苏古籍出版社，2002：288.",
+  "expected": {
+   "type": "book",
+   "title": "全唐五代诗格汇考",
+   "year": "2002",
+   "author": "张伯伟",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:2",
+  "text": "曹凌. 中国佛教疑伪经综录[M]. 上海：上海古籍出版社，2011：19.",
+  "expected": {
+   "type": "book",
+   "title": "中国佛教疑伪经综录",
+   "year": "2011",
+   "author": "曹凌",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:3",
+  "text": "陈登原. 国史旧闻：第1卷[M]. 北京：中华书局，2000：29.",
+  "expected": {
+   "type": "book",
+   "title": "国史旧闻",
+   "year": "2000",
+   "author": "陈登原",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:4",
+  "text": "王夫之. 宋论[M]. 刻本. 金陵：湘乡曾国荃，1865.",
+  "expected": {
+   "type": "book",
+   "title": "宋论",
+   "year": "1865",
+   "author": "王夫之",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:5",
+  "text": "顾炎武. 昌平山水记；京东考古录[M]. 北京：北京古籍出版社，1980.",
+  "expected": {
+   "type": "book",
+   "title": "昌平山水记；京东考古录",
+   "year": "1980",
+   "author": "顾炎武",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:6",
+  "text": "钱学森. 创建系统学[M]. 太原：山西科学技术出版社，2001：序2-3.",
+  "expected": {
+   "type": "book",
+   "title": "创建系统学",
+   "year": "2001",
+   "author": "钱学森",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:7",
+  "text": "冯友兰. 冯友兰自选集[M]. 2 版. 北京：首都师范大学出版社，2008：第1版自序.",
+  "expected": {
+   "type": "book",
+   "title": "冯友兰自选集",
+   "year": "2008",
+   "author": "冯友兰",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:8",
+  "text": "康熙字典：巳集上：水部[M]. 影印本. 北京：中华书局，1962：50.",
+  "expected": {
+   "type": "book",
+   "title": "康熙字典",
+   "year": "1962",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:9",
+  "text": "战德臣，张丽杰. 大学计算机：计算思维与信息素养[M]. 3 版. 北京：高等教育出版社，2019.",
+  "expected": {
+   "type": "book",
+   "title": "大学计算机：计算思维与信息素养",
+   "year": "2019",
+   "author": "战德臣",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:10",
+  "text": "哈里森，沃尔德伦. 经济数学与金融数学[M]. 谢远涛，译. 北京：中国人民大学出版社，2012：235-236.",
+  "expected": {
+   "type": "book",
+   "title": "经济数学与金融数学",
+   "year": "2012",
+   "author": "哈里森",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:11",
+  "text": "牛永敢，孔晓，王阳，等. 鼻整形应用解剖学[M]. 北京：人民卫生出版社，2019：65-66.",
+  "expected": {
+   "type": "book",
+   "title": "鼻整形应用解剖学",
+   "year": "2019",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:12",
+  "text": "扬奎斯特，萨金特. 递归宏观经济理论[M]. 杨斌，王忠玉，陈彦斌，等，译. 2 版. 北京：中国人民大学出版社，2010：798.",
+  "expected": {
+   "type": "book",
+   "title": "递归宏观经济理论",
+   "year": "2010",
+   "author": "扬奎斯特",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:13",
+  "text": "云南省企业联合会，云南省企业家协会，云南民族新闻文化发展研究院. 改革开放三十年：云南企业家奋斗史[M]. 芒市：德宏民族出版社，2009.",
+  "expected": {
+   "type": "book",
+   "title": "改革开放三十年：云南企业家奋斗史",
+   "year": "2009",
+   "author": "云南省企业联合会",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:14",
+  "text": "赵学功. 当代美国外交[M/OL]. 北京：社会科学文献出版社，2001. http://www.cadal.zju.edu.cn/book/trySinglePage/33023884/1.",
+  "expected": {
+   "type": "book",
+   "title": "当代美国外交",
+   "year": "2001",
+   "author": "赵学功",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:15",
+  "text": "中国造纸学会. 中国造纸年鉴：2003[M/OL]. 北京：中国轻工业出版社，2003. http://www.cadal.zju.edu.cn/book/view/25010080.",
+  "expected": {
+   "type": "book",
+   "title": "中国造纸年鉴：2003",
+   "year": "2003",
+   "author": "中国造纸学会",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:16",
+  "text": "博伯尔. 银行业的未来与人工智能[M]. 徐超，译. 北京：清华大学出版社，2023：35.",
+  "expected": {
+   "type": "book",
+   "title": "银行业的未来与人工智能",
+   "year": "2023",
+   "author": "博伯尔",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:17",
+  "text": "図書館用語辞典編集委員会. 最新図書館用語大辞典[M]. 東京：柏書房株式會社，2004：154.",
+  "expected": {
+   "type": "book",
+   "title": "最新図書館用語大辞典",
+   "year": "2004",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:18",
+  "text": "Peebles P Z Jr. Probability, random variables, and random signal principles[M]. 4th ed. New York：McGraw-Hill，2001.",
+  "expected": {
+   "type": "book",
+   "title": "Probability, random variables, and random signal principles",
+   "year": "2001",
+   "author": "Peebles",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:19",
+  "text": "Sadock B J，Sadock V A，Ruiz P，et al. Kaplan & Sadock’s comprehensive textbook of psychiatry：v.1[M]. 9th ed. Philadelphia：Wolters Kluwer Health/Lippincott Williams & Wilkins，2009.",
+  "expected": {
+   "type": "book",
+   "title": "Kaplan & Sadock’s comprehensive textbook of psychiatry",
+   "year": "2009",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:20",
+  "text": "Institute for Art and Architecture, Academy of Fine Arts Vienna. Wiener Hitze: architecture and storytelling in times of heat[M]. Zürich：Park Books，2023：78.",
+  "expected": {
+   "type": "book",
+   "title": "Wiener Hitze: architecture and storytelling in times of heat",
+   "year": "2023",
+   "author": "Institute for Art and Architecture, Academy of Fine Arts Vienna",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:21",
+  "text": "Kinchy A. Seeds, sciences, and struggle: the global politics of transgenic crops[M/OL]. Cambridge, Mass.：MIT Press，2012：50. http://lib.myilibrary.com?ID=381443.",
+  "expected": {
+   "type": "book",
+   "title": "Seeds, sciences, and struggle: the global politics of transgenic crops",
+   "year": "2012",
+   "author": "Kinchy",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:22",
+  "text": "Praetzellis A. Death by theory: a tale of mystery and archaeological theory[M/OL]. Rev. ed. Rowman & Littlefield Publishing Group, Inc.，2011：13. http://lib.myilibrary.com/Open.aspx?id=293666.",
+  "expected": {
+   "type": "book",
+   "title": "Death by theory: a tale of mystery and archaeological theory",
+   "year": "2011",
+   "author": "Praetzellis",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:23",
+  "text": "Torres L，Salisbury F，Yazbeck B，et al. Connecting the library to the curriculum[M/OL]. Singapore：Springer Nature，2021：97. https://link.springer.com/book/10.1007/978-981-16-3868-8.",
+  "expected": {
+   "type": "book",
+   "title": "Connecting the library to the curriculum",
+   "year": "2021",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:24",
+  "text": "Boobier T. AI and the future of banking[M]. Chichester：John Wiley & Sons，2020：35.",
+  "expected": {
+   "type": "book",
+   "title": "AI and the future of banking",
+   "year": "2020",
+   "author": "Boobier",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.1:25",
+  "text": "Deverell W，Igler D. A companion to California history[M/OL]. New York：John Wiley & Sons，2013：21-22. https://onlinelibrary.wiley.com/doi/book/10.1002/9781444305036.",
+  "expected": {
+   "type": "book",
+   "title": "A companion to California history",
+   "year": "2013",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.2:1",
+  "text": "阿扬. 谈谈记忆：与诺贝尔奖获得者埃里克·坎德尔的问答[M]. 姜海伦，译//《环球科学》杂志社. 认识记忆力：关于学习、思考与遗忘的脑科学. 北京：机械工业出版社，2023：15-18.",
+  "expected": {
+   "type": "chapter",
+   "title": "谈谈记忆：与诺贝尔奖获得者埃里克·坎德尔的问答",
+   "year": "2023",
+   "author": "阿扬",
+   "container": "认识记忆力：关于学习、思考与遗忘的脑科学"
+  }
+ },
+ {
+  "id": "gbt7714.b.2:2",
+  "text": "周易外传：卷5[M]//王夫之. 船山全书：第1册. 修订版. 长沙：岳麓书社，2011：983-1029.",
+  "expected": {
+   "type": "chapter",
+   "title": "周易外传：卷5",
+   "year": "2011",
+   "author": null,
+   "container": "船山全书"
+  }
+ },
+ {
+  "id": "gbt7714.b.2:3",
+  "text": "程根伟. 1998年长江洪水的成因与减灾对策[M]//许厚泽，赵其国. 长江流域洪涝灾害与科技对策. 北京：科学出版社，1999：32-36.",
+  "expected": {
+   "type": "chapter",
+   "title": "1998年长江洪水的成因与减灾对策",
+   "year": "1999",
+   "author": "程根伟",
+   "container": "长江流域洪涝灾害与科技对策"
+  }
+ },
+ {
+  "id": "gbt7714.b.2:4",
+  "text": "李约瑟. 题词[M]//苏克福，管成学，邓明鲁. 苏颂与《本草图经》研究. 长春：长春出版社，1991：扉页.",
+  "expected": {
+   "type": "chapter",
+   "title": "题词",
+   "year": "1991",
+   "author": "李约瑟",
+   "container": "苏颂与《本草图经》研究"
+  }
+ },
+ {
+  "id": "gbt7714.b.2:5",
+  "text": "陈晋镳，张惠民，朱士兴，等. 蓟县震旦亚界的研究[M]//中国地质科学院天津地质矿产研究所. 中国震旦亚界. 天津：天津科学技术出版社，1980：56-114.",
+  "expected": {
+   "type": "chapter",
+   "title": "蓟县震旦亚界的研究",
+   "year": "1980",
+   "author": "陈晋镳",
+   "container": "中国震旦亚界"
+  }
+ },
+ {
+  "id": "gbt7714.b.2:6",
+  "text": "马克思. 政治经济学批判[M]//马克思，恩格斯. 马克思恩格斯全集：第35卷. 2 版. 北京：人民出版社，2013：302.",
+  "expected": {
+   "type": "chapter",
+   "title": "政治经济学批判",
+   "year": "2013",
+   "author": "马克思",
+   "container": "马克思恩格斯全集"
+  }
+ },
+ {
+  "id": "gbt7714.b.2:7",
+  "text": "大黄[M]//国家药典委员会. 中华人民共和国药典：一部. 2020版. 北京：中国医药科技出版社，2020：24-25.",
+  "expected": {
+   "type": "chapter",
+   "title": "大黄",
+   "year": "2020",
+   "author": null,
+   "container": "中华人民共和国药典"
+  }
+ },
+ {
+  "id": "gbt7714.b.2:8",
+  "text": "楼梦麟，杨燕. 汶川地震基岩地震动特征分析[M/OL]//同济大学土木工程防灾国家重点实验室. 汶川地震震害研究. 上海：同济大学出版社，2011：11-12. http://apabi.lib.pku.edu.cn/usp/pku/pub.mvc?pid=book.detail&metaid=m.20120406-YPT-889-0010.",
+  "expected": {
+   "type": "chapter",
+   "title": "汶川地震基岩地震动特征分析",
+   "year": "2011",
+   "author": "楼梦麟",
+   "container": "汶川地震震害研究"
+  }
+ },
+ {
+  "id": "gbt7714.b.2:9",
+  "text": "Weinstein L，Swartz M N. Pathogenic properties of invading microorganisms[M]//Sodeman W A Jr，Sodeman W A. Pathologic physiology: mechanisms of disease. 5th ed. Philadelphia：Saunders，1974：457-472.",
+  "expected": {
+   "type": "chapter",
+   "title": "Pathogenic properties of invading microorganisms",
+   "year": "1974",
+   "author": "Weinstein",
+   "container": "Pathologic physiology: mechanisms of disease"
+  }
+ },
+ {
+  "id": "gbt7714.b.2:10",
+  "text": "Roberson J A，Burneson E G. Drinking water quality standards, regulations and goals[M/OL]//American Water Works Association. Water quality & treatment: a handbook on drinking water. 6th ed. New York：McGraw-Hill，2011：1.1-1.36. http://lib.myilibrary.com/Open.aspx?id=291430.",
+  "expected": {
+   "type": "chapter",
+   "title": "Drinking water quality standards, regulations and goals",
+   "year": "2011",
+   "author": "Roberson",
+   "container": "Water quality & treatment: a handbook on drinking water"
+  }
+ },
+ {
+  "id": "gbt7714.b.3:1",
+  "text": "中华医学会湖北分会. 临床内科杂志[J]. 1984，1（1）-. 武汉：中华医学会湖北分会，1984.",
+  "expected": {
+   "type": "book",
+   "title": "临床内科杂志",
+   "year": "1984",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.3:2",
+  "text": "中国图书馆学会. 图书馆学通讯[J]. 1957（1）-1990（4）. 北京：北京图书馆，1957-1990.",
+  "expected": {
+   "type": "book",
+   "title": "图书馆学通讯",
+   "year": "1957",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.3:3",
+  "text": "American Association for the Advancement of Science. Science[J]. 1883，1（1）-. Washington, D.C.：American Association for the Advancement of Science，1883.",
+  "expected": {
+   "type": "book",
+   "title": "Science",
+   "year": "1883",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.3:4",
+  "text": "Public library quarterly[J/OL]. 1979，1（1）-. Philadelphia：Taylor & Francis，1979. http://www.tandfonline.com/loi/wplq.",
+  "expected": {
+   "type": "book",
+   "title": "Public library quarterly",
+   "year": "1979",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.4:1",
+  "text": "杨洪升. 四库馆私家抄校书考略[J]. 文献，2013（1）：56-75.",
+  "expected": {
+   "type": "article-journal",
+   "title": "四库馆私家抄校书考略",
+   "year": "2013",
+   "author": "杨洪升",
+   "container": "文献"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:2",
+  "text": "丁文详. 数字革命与竞争国际化[N]. 中国青年报，2000-11-20（15）.",
+  "expected": {
+   "type": "article-newspaper",
+   "title": "数字革命与竞争国际化",
+   "year": "2000",
+   "author": "丁文详",
+   "container": "中国青年报"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:3",
+  "text": "于潇，刘义，柴跃廷，等. 互联网药品可信交易环境中主体资质审核备案模式[J]. 清华大学学报（自然科学版），2012，52（11）：1518-1523.",
+  "expected": {
+   "type": "article-journal",
+   "title": "互联网药品可信交易环境中主体资质审核备案模式",
+   "year": "2012",
+   "author": "于潇",
+   "container": "清华大学学报（自然科学版）"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:4",
+  "text": "久保智康. 花枝蝶鸟方镜的镜范：以平安后期的铜镜制作工艺为中心[J]. 顾幼静，译. 东方博物，2009（1）：85-92.",
+  "expected": {
+   "type": "article-journal",
+   "title": "花枝蝶鸟方镜的镜范：以平安后期的铜镜制作工艺为中心",
+   "year": "2009",
+   "author": "久保智康",
+   "container": "东方博物"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:5",
+  "text": "陈建军. 从数字地球到智慧地球[J/OL]. 国土资源导刊，2010，7（10）：93. http://d.g.wanfangdata.com.cn/Periodical_hunandz201010038.aspx. DOI:10.3969/j.issn.1672-5603.2010.10.038.",
+  "expected": {
+   "type": "article-journal",
+   "title": "从数字地球到智慧地球",
+   "year": "2010",
+   "author": "陈建军",
+   "container": "国土资源导刊"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:6",
+  "text": "陈缮真. 探索微观世界的无穷奥秘（科技大观）[N/OL]. 人民日报，2022-08-16（17）. http://paper.people.com.cn/rmrb/html/2022-08/16/nw.D110000renmrb_20220816_3-17.htm.",
+  "expected": {
+   "type": "article-newspaper",
+   "title": "探索微观世界的无穷奥秘（科技大观）",
+   "year": "2022",
+   "author": "陈缮真",
+   "container": "人民日报"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:7",
+  "text": "李幼平，王莉. 循证医学研究方法：附视频[J/OL]. 中华移植杂志（电子版），2010，4（3）：225-228. http://www.cqvip.com/Read/Read.aspx?id=36658332.",
+  "expected": {
+   "type": "article-journal",
+   "title": "循证医学研究方法：附视频",
+   "year": "2010",
+   "author": "李幼平",
+   "container": "中华移植杂志（电子版）"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:8",
+  "text": "张群，程志宝，石志飞. 惯性增强动力吸振器-浮置板轨道低频减振性能研究[J/OL]. 铁道学报，2024-05-09. http://kns.cnki.net/kcms/detail/11.2104.u.20240507.1737.002.html.",
+  "expected": {
+   "type": "article-journal",
+   "title": "惯性增强动力吸振器-浮置板轨道低频减振性能研究",
+   "year": "2024",
+   "author": "张群",
+   "container": "铁道学报"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:9",
+  "text": "张群，程志宝，石志飞. 惯性增强动力吸振器-浮置板轨道低频减振性能研究[J]. 铁道学报，2024，46（8）：102-111.",
+  "expected": {
+   "type": "article-journal",
+   "title": "惯性增强动力吸振器-浮置板轨道低频减振性能研究",
+   "year": "2024",
+   "author": "张群",
+   "container": "铁道学报"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:10",
+  "text": "徐建委. 历史的起点：《史记》中的时间设置及其意义[J/OL]. 北京大学学报（哲学社会科学版），2025，62（2）：117-127. https://ncpssd.org/Literature/articleinfo?id=BJDXXBZXSHKXB2025002012&synUpdateType=&type=journalArticle&typename=%E4%B8%AD%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&nav=1&langType=1&pageUrl=https%253A%252F%252Fncpssd.org%252Fjournal%252Fdetails%253Fgch%253D81274X%2526nav%253D1%2526langType%253D1.",
+  "expected": {
+   "type": "article-journal",
+   "title": "历史的起点：《史记》中的时间设置及其意义",
+   "year": "2025",
+   "author": "徐建委",
+   "container": "北京大学学报（哲学社会科学版）"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:11",
+  "text": "王利平，王福新，刘洪. 过冷大水滴环境粒径分布模拟方法研究进展[J]. 航空学报，2024，45（增刊1）：730570.",
+  "expected": {
+   "type": "article-journal",
+   "title": "过冷大水滴环境粒径分布模拟方法研究进展",
+   "year": "2024",
+   "author": "王利平",
+   "container": "航空学报"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:12",
+  "text": "Caplan P. Cataloging internet resources[J]. The Public-Access Computer Systems Review，1993，4（2）：61-66.",
+  "expected": {
+   "type": "article-journal",
+   "title": "Cataloging internet resources",
+   "year": "1993",
+   "author": "Caplan",
+   "container": "The Public-Access Computer Systems Review"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:13",
+  "text": "Saito M，Miyazaki K. Jadeite-bearing metagabbro in serpentinite melange of the “Kurosegawa Belt” in Izumi Town, Yatsushiro City, Kumamoto Prefecture, central Kyushu[J]. Bulletin of the Geological Survey of Japan，2006，57（5/6）：169-176.",
+  "expected": {
+   "type": "article-journal",
+   "title": "Jadeite-bearing metagabbro in serpentinite melange of the “Kurosegawa Belt” in Izumi Town, Yatsushiro City, Kumamoto Prefecture, central Kyushu",
+   "year": "2006",
+   "author": "Saito",
+   "container": "Bulletin of the Geological Survey of Japan"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:14",
+  "text": "Des Marais D J，Strauss H，Summons R E，et al. Carbon isotope evidence for the stepwise oxidation of the Proterozoic environment[J]. Nature，1992，359：605-609.",
+  "expected": {
+   "type": "article-journal",
+   "title": "Carbon isotope evidence for the stepwise oxidation of the Proterozoic environment",
+   "year": "1992",
+   "author": "Des Marais",
+   "container": "Nature"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:15",
+  "text": "Park J-R，Tosaka Y. Metadata quality control in digital repositories and collections: criteria, semantics, and mechanisms[J/OL]. Cataloging & Classification Quarterly，2010，48（8）：696-715. https://www.tandfonline.com/doi/full/10.1080/01639374.2010.508711.",
+  "expected": {
+   "type": "article-journal",
+   "title": "Metadata quality control in digital repositories and collections: criteria, semantics, and mechanisms",
+   "year": "2010",
+   "author": "Park",
+   "container": "Cataloging & Classification Quarterly"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:16",
+  "text": "Frese K S，Katus H A，Meder B. Next-generation sequencing: from understanding biology to personalized medicine[J/OL]. Biology，2013，2（1）：378-398. http://www.mdpi.com/2079-7737/2/1/378. DOI:10.3390/biology2010378.",
+  "expected": {
+   "type": "article-journal",
+   "title": "Next-generation sequencing: from understanding biology to personalized medicine",
+   "year": "2013",
+   "author": "Frese",
+   "container": "Biology"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:17",
+  "text": "Myburg A A，Grattapaglia D，Tuskan G A，et al. The genome of Eucalyptus grandis[J/OL]. Nature，2014，510：356-362. https://www.nature.com/articles/nature13308.pdf. DOI:10.1038/nature13308.",
+  "expected": {
+   "type": "article-journal",
+   "title": "The genome of Eucalyptus grandis",
+   "year": "2014",
+   "author": "Myburg",
+   "container": "Nature"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:18",
+  "text": "Santer R D，Akanyeti O. Using artificial neural networks to explain the attraction of jewel beetles (Coleoptera: Buprestidae) to colored traps[J/OL]. Insect science，2025. https://webofscience.clarivate.cn/wos/woscc/full-record/WOS:001398099800001. DOI:10.1111/1744-7917.13496.",
+  "expected": {
+   "type": "article-journal",
+   "title": "Using artificial neural networks to explain the attraction of jewel beetles (Coleoptera: Buprestidae) to colored traps",
+   "year": "2025",
+   "author": "Santer",
+   "container": "Insect science"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:19",
+  "text": "Shinotsuka H，Nagata K，Siriwardana M，et al. Sample structure prediction from measured XPS data using Bayesian estimation and SESSA simulator[J/OL]. Journal of electron spectroscopy and related phenomena，2023，267：147370. https://doi.org/10.1016/j.elspec.2023.147370.",
+  "expected": {
+   "type": "article-journal",
+   "title": "Sample structure prediction from measured XPS data using Bayesian estimation and SESSA simulator",
+   "year": "2023",
+   "author": "Shinotsuka",
+   "container": "Journal of electron spectroscopy and related phenomena"
+  }
+ },
+ {
+  "id": "gbt7714.b.4:20",
+  "text": "Veen P H van der，Muller M，Vincken K L，et al. Longitudinal changes in brain volumes and cerebrovascular lesions on MRI in patients with manifest arterial disease: the SMART-MR study[J/OL]. Journal of the Neurological Sciences，2014，337（1/2）：112-118. https://pubmed.ncbi.nlm.nih.gov/24314719/. DOI:10.1016/j.jns.2013.11.029.",
+  "expected": {
+   "type": "article-journal",
+   "title": "Longitudinal changes in brain volumes and cerebrovascular lesions on MRI in patients with manifest arterial disease: the SMART-MR study",
+   "year": "2014",
+   "author": "Veen",
+   "container": "Journal of the Neurological Sciences"
+  }
+ },
+ {
+  "id": "gbt7714.b.5:1",
+  "text": "李妍，王莹. 医疗机构保洁人员“一前五后”手卫生干预效果研究[C]//中华预防医学会医院感染控制分会第31次全国医院感染学术年会，2022：2.",
+  "expected": {
+   "type": "paper-conference",
+   "title": "医疗机构保洁人员“一前五后”手卫生干预效果研究",
+   "year": "2022",
+   "author": "李妍",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.5:2",
+  "text": "牛志明，Swingland I R，雷光春. 综合湿地管理：综合湿地管理国际研讨会论文集[M]. 北京：海洋出版社，2012.",
+  "expected": {
+   "type": "book",
+   "title": "综合湿地管理：综合湿地管理国际研讨会论文集",
+   "year": "2012",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.5:3",
+  "text": "中国社会科学院台湾史研究中心. 台湾光复六十五周年暨抗战史实学术研讨会论文集[M]. 北京：九州出版社，2012.",
+  "expected": {
+   "type": "book",
+   "title": "台湾光复六十五周年暨抗战史实学术研讨会论文集",
+   "year": "2012",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.5:4",
+  "text": "肖希明，石庆功，刘奕. 民国图书馆学教育的社会贡献[C]//纪念北京大学图书馆学教育100周年研讨会论文集. 北京：北京大学信息管理系，2024：134-147.",
+  "expected": {
+   "type": "paper-conference",
+   "title": "民国图书馆学教育的社会贡献",
+   "year": "2024",
+   "author": "肖希明",
+   "container": "纪念北京大学图书馆学教育100周年研讨会论文集"
+  }
+ },
+ {
+  "id": "gbt7714.b.5:5",
+  "text": "汪学军. 中国农业转基因生物研发进展与安全管理[C]//国家环境保护总局生物安全管理办公室. 中国国家生物安全框架实施国际合作项目研讨会论文集. 北京：中国环境科学出版社，2005：22-25.",
+  "expected": {
+   "type": "paper-conference",
+   "title": "中国农业转基因生物研发进展与安全管理",
+   "year": "2005",
+   "author": "汪学军",
+   "container": "中国国家生物安全框架实施国际合作项目研讨会论文集"
+  }
+ },
+ {
+  "id": "gbt7714.b.5:6",
+  "text": "贾东琴，柯平. 面向数字素养的高校图书馆数字服务体系研究[C]//中国图书馆学会. 中国图书馆学会年会论文集：2011年卷. 北京：国家图书馆出版社，2011：45-52.",
+  "expected": {
+   "type": "paper-conference",
+   "title": "面向数字素养的高校图书馆数字服务体系研究",
+   "year": "2011",
+   "author": "贾东琴",
+   "container": "中国图书馆学会年会论文集"
+  }
+ },
+ {
+  "id": "gbt7714.b.5:7",
+  "text": "陈志勇. 中国财税文化价值研究：“中国财税文化国际学术研讨会”论文集[M/OL]. 北京：经济科学出版社，2011. http://apabi.lib.pku.edu.cn/usp/pku/pub.mvc?pid=book.detail&metaid=m.20110628-BPO-889-0135&cult=CN.",
+  "expected": {
+   "type": "book",
+   "title": "中国财税文化价值研究：“中国财税文化国际学术研讨会”论文集",
+   "year": "2011",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.5:8",
+  "text": "Wang S. Application of improved SOM neural network in intelligent auditing of hospital financial vouchers[C/OL]//2022 6th Asian Conference on Artificial Intelligence Technology，2022：2. https://ieeexplore.ieee.org/document/10137867. DOI:10.1109/ACAIT56212.2022.10137867.",
+  "expected": {
+   "type": "paper-conference",
+   "title": "Application of improved SOM neural network in intelligent auditing of hospital financial vouchers",
+   "year": "2022",
+   "author": "Wang",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.5:9",
+  "text": "Yu Y，Pan E，Wang X，et al. Unmixing before fusion: a generalized paradigm for multi-source-based hyperspectral image synthesis[C/OL]//CVPR，2024：4. https://openaccess.thecvf.com/content/CVPR2024/html/Yu_Unmixing_Before_Fusion_A_Generalized_Paradigm_for_Multi-Source-based_Hyperspectral_Image_CVPR_2024_paper.html.",
+  "expected": {
+   "type": "paper-conference",
+   "title": "Unmixing before fusion: a generalized paradigm for multi-source-based hyperspectral image synthesis",
+   "year": "2024",
+   "author": "Yu",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.5:10",
+  "text": "Yufin S A. Geoecology and computers: proceedings of the Third International Conference on Advances of Computer Methods in Geotechnical and Geoenvironmental Engineering, Moscow, Russia, February 1-4, 2000[M]. Rotterdam：A. A. Balkema，2000.",
+  "expected": {
+   "type": "book",
+   "title": "Geoecology and computers: proceedings of the Third International Conference on Advances of Computer Methods in Geotechnical and Geoenvironmental Engineering, Moscow, Russia, February 1-4, 2000",
+   "year": "2000",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.5:11",
+  "text": "Babu B V，Nagar A，Deep K，et al. Proceedings of the Second International Conference on Soft Computing for Problem Solving (SocProS 2012), December 28-30, 2012[M]. New Delhi：Springer，2014.",
+  "expected": {
+   "type": "book",
+   "title": "Proceedings of the Second International Conference on Soft Computing for Problem Solving (SocProS 2012), December 28-30, 2012",
+   "year": "2014",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.5:12",
+  "text": "Fourney M E. Advances in holographic photoelasticity[C]//Gottenberg W G. Symposium on Applications of Holography in Mechanics, August 23-25, 1971, University of Southern California, Los Angeles, California. New York：ASME，1971：17-38.",
+  "expected": {
+   "type": "paper-conference",
+   "title": "Advances in holographic photoelasticity",
+   "year": "1971",
+   "author": "Fourney",
+   "container": "Symposium on Applications of Holography in Mechanics, August 23-25, 1971, University of Southern California, Los Angeles, California"
+  }
+ },
+ {
+  "id": "gbt7714.b.6:1",
+  "text": "王琦. 融合星载GNSS-R和SAR数据的高时空分辨率土壤湿度反演方法研究[D]. 武汉：武汉大学，2022：87.",
+  "expected": {
+   "type": "thesis",
+   "title": "融合星载GNSS-R和SAR数据的高时空分辨率土壤湿度反演方法研究",
+   "year": "2022",
+   "author": "王琦",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.6:2",
+  "text": "金燕萍. 社交媒体时代的虚假信息研究[D/OL]. 温州：温州大学，2020：16. https://d.wanfangdata.com.cn/thesis/D02216281.",
+  "expected": {
+   "type": "thesis",
+   "title": "社交媒体时代的虚假信息研究",
+   "year": "2020",
+   "author": "金燕萍",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.6:3",
+  "text": "何筱梅. 新媒体时代原生广告的策略与发展研究[D/OL]. 武汉：武汉大学，2016：24-25. http://paperright.lib.whu.edu.cn/read/pdfindex1.jsp?fid=2f1d8c4e156d9863466de341e4790782.",
+  "expected": {
+   "type": "thesis",
+   "title": "新媒体时代原生广告的策略与发展研究",
+   "year": "2016",
+   "author": "何筱梅",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.6:4",
+  "text": "井丽南. 支持状态可编程的SDN交换机关键技术研究[D/OL]. 北京：中国科学院大学，2022：43. http://dpaper.las.ac.cn/Dpaper/detail/detailNew?paperID=20209289. CSTR:35001.37.01.33142.20220037.",
+  "expected": {
+   "type": "thesis",
+   "title": "支持状态可编程的SDN交换机关键技术研究",
+   "year": "2022",
+   "author": "井丽南",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.6:5",
+  "text": "Cairns B R. Infrared spectroscopic studies of solid oxygen[D]. Berkeley：University of California, Berkeley，1965：15.",
+  "expected": {
+   "type": "thesis",
+   "title": "Infrared spectroscopic studies of solid oxygen",
+   "year": "1965",
+   "author": "Cairns",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.6:6",
+  "text": "Christou A. Improving knowledge graph understanding with contextual views[D/OL]. Ohio：Wright State University，2024：18. http://rave.ohiolink.edu/etdc/view?acc_num=wright1715878159408301.",
+  "expected": {
+   "type": "thesis",
+   "title": "Improving knowledge graph understanding with contextual views",
+   "year": "2024",
+   "author": "Christou",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.7:1",
+  "text": "中国互联网络信息中心. 第29次中国互联网络发展状况统计报告[R/OL]. 2012-01-16. https://www.cnnic.net.cn/NMediaFile/old_attach/P020120612484958777344.pdf.",
+  "expected": {
+   "type": "report",
+   "title": "第29次中国互联网络发展状况统计报告",
+   "year": "2012",
+   "author": "中国互联网络信息中心",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.7:2",
+  "text": "汤万金，杨跃翔，刘文，等. 人体安全重要技术标准研制最终报告：7178999X-2006BAK04A10/10.2013[R/OL]. 2013-09-30. http://www.nstrs.cn/xiangxiBG.aspx?id=41707.",
+  "expected": {
+   "type": "report",
+   "title": "人体安全重要技术标准研制最终报告",
+   "year": "2013",
+   "author": "汤万金",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.7:3",
+  "text": "中国信息通信研究院，中国电信股份有限公司研究院，中国移动通信研究院，等. 电信业发展白皮书：2023：新时代高质量发展探索[R/OL]. 2023-12-28. http://www.caict.ac.cn/kxyj/qwfb/bps/202312/P020240326615399026294.pdf.",
+  "expected": {
+   "type": "report",
+   "title": "电信业发展白皮书：2023：新时代高质量发展探索",
+   "year": "2023",
+   "author": "中国信息通信研究院",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.7:4",
+  "text": "Calkin D E，Ager A A，Thompson M P. A comparative risk assessment framework for wildland fire management: the 2010 cohesive strategy science report：RMRS-GTR-262[R/OL]. 2011：8-9. https://www.fs.usda.gov/rm/pubs/rmrs_gtr262.pdf.",
+  "expected": {
+   "type": "report",
+   "title": "A comparative risk assessment framework for wildland fire management: the 2010 cohesive strategy science report",
+   "year": "2011",
+   "author": "Calkin",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.7:5",
+  "text": "U.S. Department of Transportation Federal Highway Administration. Guidelines for handling excavated acid-producing materials：PB 91-194001[R]. Springfield：U.S. Department of Commerce National Information Service，1990：25.",
+  "expected": {
+   "type": "report",
+   "title": "Guidelines for handling excavated acid-producing materials",
+   "year": "1990",
+   "author": "U.S. Department of Transportation Federal Highway Administration",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.7:6",
+  "text": "United Nations Department of Economic and Social Affairs. United Nations e-government survey 2024: accelerating digital transformation for sustainable development[R/OL]. [2025]. https://publicadministration.un.org/egovkb/en-us/Reports/UN-E-Government-Survey-2024.",
+  "expected": {
+   "type": "report",
+   "title": "United Nations e-government survey 2024: accelerating digital transformation for sustainable development",
+   "year": null,
+   "author": "United Nations Department of Economic and Social Affairs",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.8:1",
+  "text": "GB/T 3792—2021 信息与文献　资源描述[S].",
+  "expected": {
+   "type": "standard",
+   "title": "信息与文献　资源描述",
+   "year": "2021",
+   "author": "全国信息与文献标准化技术委员会",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.8:2",
+  "text": "GB/T 20090.16—2016 信息技术　先进音视频编码　第16部分：广播电视视频[S].",
+  "expected": {
+   "type": "standard",
+   "title": "信息技术　先进音视频编码　第16部分：广播电视视频",
+   "year": "2016",
+   "author": "全国信息技术标准化技术委员会",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.8:3",
+  "text": "GB 18030—2022 信息技术　中文编码字符集[S/OL]. http://c.gb688.cn/bzgk/gb/showGb?type=online&hcno=A1931A578FE14957104988029B0833D3.",
+  "expected": {
+   "type": "standard",
+   "title": "信息技术　中文编码字符集",
+   "year": "2022",
+   "author": "工业和信息化部",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.8:4",
+  "text": "NB/T 10386—2020 水电工程水温实时监测系统技术规范[S].",
+  "expected": {
+   "type": "standard",
+   "title": "水电工程水温实时监测系统技术规范",
+   "year": "2020",
+   "author": "国家能源局",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.8:5",
+  "text": "ISO 21378:2019 Audit data collection[S].",
+  "expected": {
+   "type": "standard",
+   "title": "Audit data collection",
+   "year": "2019",
+   "author": "ISO",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.8:6",
+  "text": "IEC/IEEE 61636-1:2021 Software interface for maintenance information collection and analysis (SIMICA): exchanging test results and session information via the eXtensible Markup Language (XML)[S].",
+  "expected": {
+   "type": "standard",
+   "title": "Software interface for maintenance information collection and analysis (SIMICA): exchanging test results and session information via the eXtensible Markup Language (XML)",
+   "year": "2021",
+   "author": "International Electrotechnical Commission (IEC)",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.8:7",
+  "text": "IEEE P802.11ba/D8.0-2020 IEEE approved draft standard for information technology--telecommunications and information exchange between systems local and metropolitan area networks--specific requirements Part 11: wireless LAN Medium Access Control (MAC) and Physical Layer (PHY) specifications amendment 3: wake-up radio operation[S].",
+  "expected": {
+   "type": "standard",
+   "title": "IEEE approved draft standard for information technology--telecommunications and information exchange between systems local and metropolitan area networks--specific requirements Part 11: wireless LAN Medium Access Control (MAC) and Physical Layer (PHY) specifications amendment 3: wake-up radio operation",
+   "year": "2020",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.8:8",
+  "text": "AIAA G-136-2022 Guide to lithium battery safety for space applications[S].",
+  "expected": {
+   "type": "standard",
+   "title": "Guide to lithium battery safety for space applications",
+   "year": "2022",
+   "author": "American Institute of Aeronautics and Astronautics (AIAA)",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.8:9",
+  "text": "ISO/IEC 80079-20-2:2016(en) Explosive atmospheres — Part 20-2: Material characteristics — Combustible dusts test methods[S].",
+  "expected": {
+   "type": "standard",
+   "title": "Explosive atmospheres — Part 20-2: Material characteristics — Combustible dusts test methods",
+   "year": "2016",
+   "author": "ISO",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.8:10",
+  "text": "ISO/IEC 80079-20-2:2016(fr) Atmosphères explosives — Partie 20-2: Caractéristiques des produits — Méthodes d’essai des poussières combustibles[S].",
+  "expected": {
+   "type": "standard",
+   "title": "Atmosphères explosives — Partie 20-2: Caractéristiques des produits — Méthodes d’essai des poussières combustibles",
+   "year": "2016",
+   "author": "ISO",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.9:1",
+  "text": "邓一刚. 全智能节电器：CN200610171314.3[P]. 2008-01-16：8-9.",
+  "expected": {
+   "type": "patent",
+   "title": "全智能节电器",
+   "year": "2008",
+   "author": "邓一刚",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.9:2",
+  "text": "张凯军，赵永杰，陈朝岗. 轨道火车及高速轨道火车紧急安全制动辅助装置：CN201220158825.2[P]. 2013-03-27.",
+  "expected": {
+   "type": "patent",
+   "title": "轨道火车及高速轨道火车紧急安全制动辅助装置",
+   "year": "2013",
+   "author": "张凯军",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.9:3",
+  "text": "李华，王昊，康佐. 一种拼接式桥梁模型：CN202222658126.0[P/OL]. 2023-01-03. http://patentscope2.wipo.int/search/en/detail.jsf?docId=CN390029302&_cid=JP1-MAY1P5-04922-1.",
+  "expected": {
+   "type": "patent",
+   "title": "一种拼接式桥梁模型",
+   "year": "2023",
+   "author": "李华",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.9:4",
+  "text": "石顺祥，许海平，孙艳玲，等. 光折变自适应光外差探测方法：CN01128777.2[P/OL]. 2002-03-06. http://211.152.9.47/sipoasp/zljs/hyjs-yx-new.asp?recid=01128777.2&leixin=0.",
+  "expected": {
+   "type": "patent",
+   "title": "光折变自适应光外差探测方法",
+   "year": "2002",
+   "author": "石顺祥",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.9:5",
+  "text": "冀超. 一种荒漠化地区生态植被综合培育种植方法：CN01129210.5[P/OL]. 2001-10-24. http://211.152.9.47/sipoasp/zlijs/hyjs-yx-new.asp?recid=01129210.5&leixin=0.",
+  "expected": {
+   "type": "patent",
+   "title": "一种荒漠化地区生态植被综合培育种植方法",
+   "year": "2001",
+   "author": "冀超",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.9:6",
+  "text": "史国华，樊金宇，何益，等. 光コヒーレンス断層拡張現実に基づく手術顕微鏡撮像システム及び方法：JP2021578120A[P/OL]. 2022-09-13. https://pss-system.cponline.cnipa.gov.cn/documents/detail?prevPageTit=changgui.",
+  "expected": {
+   "type": "patent",
+   "title": "光コヒーレンス断層拡張現実に基づく手術顕微鏡撮像システム及び方法",
+   "year": "2022",
+   "author": "史国华",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.9:7",
+  "text": "Tachibana R，Shimizu S，Kobayashi S，et al. Electronic watermarking method and system：US89404301A[P/OL]. 2001-06-28. https://worldwide.espacenet.com/patent/search/family/018694900/publication/US2002061118A1?q=US89404301A.",
+  "expected": {
+   "type": "patent",
+   "title": "Electronic watermarking method and system",
+   "year": "2001",
+   "author": "Tachibana",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.9:8",
+  "text": "Tristram M，Skarshewski P，Tristram I，et al. Storage and delivery system：AU2022228203A[P/OL]. 2022-10-06. https://worldwide.espacenet.com/patent/search/family/061561249/publication/AU2022228203A1?q=AU2022228203A.",
+  "expected": {
+   "type": "patent",
+   "title": "Storage and delivery system",
+   "year": "2022",
+   "author": "Tristram",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:1",
+  "text": "中国科学院文献情报中心. 中国科学院科技论文预发布平台[EB/OL]. [2025-03-06]. https://chinaxiv.org/home.htm.",
+  "expected": {
+   "type": "webpage",
+   "title": "中国科学院科技论文预发布平台",
+   "year": null,
+   "author": "中国科学院文献情报中心",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:2",
+  "text": "北京鲁迅博物馆（北京新文化运动纪念馆）. 北京鲁迅博物馆志愿服务章程[EB/OL]. （2021-04-21）[2023-05-02]. http://www.luxunmuseum.com.cn/html/202104/a11310.htm.",
+  "expected": {
+   "type": "webpage",
+   "title": "北京鲁迅博物馆志愿服务章程",
+   "year": "2021",
+   "author": "北京鲁迅博物馆（北京新文化运动纪念馆）",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:3",
+  "text": "杨立华. 《庄子》读不懂？看完这一篇“导读”就明白了[EB/OL]. （2022-10-26）[2023-05-02]. https://www.bilibili.com/video/BV1t84y1B7vv/.",
+  "expected": {
+   "type": "motion_picture",
+   "title": "《庄子》读不懂？看完这一篇“导读”就明白了",
+   "year": "2022",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:4",
+  "text": "高等教育文献保障系统. 馆际互借与文献传递服务[EB/OL]. [2025-06-21]. http://home.calis.edu.cn/pages/list.html?id=4101e184-7f64-4798-a5e1-8e37aa6994fc.",
+  "expected": {
+   "type": "webpage",
+   "title": "馆际互借与文献传递服务",
+   "year": null,
+   "author": "高等教育文献保障系统",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:5",
+  "text": "许振超：“好好干，当一个好工人”[EB/OL]. （2025-02-17）[2025-06-22]. https://cpc.people.com.cn/n1/2025/0217/c443712-40419790.html.",
+  "expected": {
+   "type": "webpage",
+   "title": "许振超：“好好干，当一个好工人”",
+   "year": "2025",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:6",
+  "text": "[《昨日之歌》图书封面][EB/OL]. （2015-09-18）[2023-03-06]. http://www.luxunmuseum.com.cn/uploads/allimg/150813/1-150Q31952110-L.jpg.",
+  "expected": {
+   "type": "graphic",
+   "title": "[《昨日之歌》图书封面]",
+   "year": "2015",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:7",
+  "text": "仉尚航. 开放世界中的实体基础模型[EB/OL]. （2024-12-24）[2025-01-02]. https://www.ppthub.com.cn/view/19309.",
+  "expected": {
+   "type": "webpage",
+   "title": "开放世界中的实体基础模型",
+   "year": "2024",
+   "author": "仉尚航",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:8",
+  "text": "西黄丸[EB/OL]. （2023-10-07）[2025-08-26]. https://ydz.chp.org.cn/#/item?bookId=1&entryId=1154.",
+  "expected": {
+   "type": "webpage",
+   "title": "西黄丸",
+   "year": "2023",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:9",
+  "text": "Library of Congress[EB/OL]. [2020-06-12]. https://www.loc.gov/.",
+  "expected": {
+   "type": "webpage",
+   "title": "Library of Congress",
+   "year": null,
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:10",
+  "text": "International Organization for Standardization. ISO homepage[EB/OL]. [2020-10-06]. https://www.iso.org/home.html.",
+  "expected": {
+   "type": "webpage",
+   "title": "ISO homepage",
+   "year": null,
+   "author": "International Organization for Standardization",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:11",
+  "text": "António M，Pepper L. Histórias de Portugal: livros caídos[EB/OL]. （2019-07-13）[2025-01-02]. https://arquivo.pt/wayback/20190905210731/http://publico.pt/2019/07/13/sociedade/noticia/podcast-historias-portugal-cuidadores-1879731.",
+  "expected": {
+   "type": "webpage",
+   "title": "Histórias de Portugal: livros caídos",
+   "year": "2019",
+   "author": "António",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:12",
+  "text": "Bevington D，Brown J R. William Shakespeare[EB/OL]. （2025-01-01）[2025-01-03]. https://www.britannica.com/biography/William-Shakespeare.",
+  "expected": {
+   "type": "webpage",
+   "title": "William Shakespeare",
+   "year": "2025",
+   "author": "Bevington",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.10:13",
+  "text": "Zotero. [Zotero download][EB/OL]. [2024-04-08]. https://www.zotero.org/download/.",
+  "expected": {
+   "type": "webpage",
+   "title": "[Zotero download]",
+   "year": null,
+   "author": "Zotero",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.11:1",
+  "text": "李鸿章. 奏请上海道库洋务外销要款无款可筹仍拨药厘接济事：04-01-35-0399-039[A]. 北京：中国第一历史档案馆，1887.",
+  "expected": {
+   "type": "personal_communication",
+   "title": "奏请上海道库洋务外销要款无款可筹仍拨药厘接济事",
+   "year": "1887",
+   "author": "李鸿章",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.11:2",
+  "text": "湖北省建设厅. 湖北省建设厅关于检发实业部农工矿业团体登记规则的布告、训令及湖北省政府的训令：LS031-001-0001-001[A/OL]. 武汉：湖北省档案馆，1931-11-07. https://www.hbda.gov.cn/pdf/LS031-001-0001-001.PDF.PDF.",
+  "expected": {
+   "type": "manuscript",
+   "title": "湖北省建设厅关于检发实业部农工矿业团体登记规则的布告、训令及湖北省政府的训令",
+   "year": "1931",
+   "author": "湖北省建设厅",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.11:3",
+  "text": "中国人民解放军武汉市军事管制委员会接管国立武汉大学的文告[A/OL]. 武汉：武汉大学档案馆，1949. https://archive.whu.edu.cn/index/forwardView/20/51.",
+  "expected": {
+   "type": "manuscript",
+   "title": "中国人民解放军武汉市军事管制委员会接管国立武汉大学的文告",
+   "year": "1949",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.11:4",
+  "text": "Fitzwilliam H. [Letter to Bess of Hardwick][A/OL]. 1570-07-28. https://www.bessofhardwick.org/letter.jsp?letter=25.",
+  "expected": {
+   "type": "personal_communication",
+   "title": "[Letter to Bess of Hardwick]",
+   "year": "1570",
+   "author": "Fitzwilliam",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.12:1",
+  "text": "胡健民. 东南极拉斯曼丘陵地区地质图. 1:25000[CM]. 北京：科学出版社，2021. 128cm×84cm.",
+  "expected": {
+   "type": "map",
+   "title": "东南极拉斯曼丘陵地区地质图",
+   "year": "2021",
+   "author": "胡健民",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.12:2",
+  "text": "刘祥沈. 沈阳市政区图. 1:170000[CM]. 武汉：武汉大学出版社，2016. 138cm×96cm.",
+  "expected": {
+   "type": "map",
+   "title": "沈阳市政区图",
+   "year": "2016",
+   "author": "刘祥沈",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.12:3",
+  "text": "中工武大设计研究有限公司. 阳新县标准地名图[CM]. 武汉：武汉大学出版社，2019. 97cm×67cm.",
+  "expected": {
+   "type": "map",
+   "title": "阳新县标准地名图",
+   "year": "2019",
+   "author": "中工武大设计研究有限公司",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.12:4",
+  "text": "吴自银，温珍河. 中国南部海域海底地形图. 1:3000000[CM]. 北京：科学出版社，2019. 100cm×70cm.",
+  "expected": {
+   "type": "map",
+   "title": "中国南部海域海底地形图",
+   "year": "2019",
+   "author": "吴自银",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.12:5",
+  "text": "国家测绘地理信息局. 一带一路经济走廊及其途经城市分布地势图[CM/OL]. [2025]. http://ydyl.china.com.cn/2016-10/27/content_39582227.htm.",
+  "expected": {
+   "type": "map",
+   "title": "一带一路经济走廊及其途经城市分布地势图",
+   "year": null,
+   "author": "国家测绘地理信息局",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.12:6",
+  "text": "訾冬梅，高秀静. 内蒙古自治区地图册[CM]. 新版. 北京：中国地图出版社，2006.",
+  "expected": {
+   "type": "map",
+   "title": "内蒙古自治区地图册",
+   "year": "2006",
+   "author": "訾冬梅",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.12:7",
+  "text": "谭其骧. 中国历史地图集：第2册[CM]. 北京：地图出版社，1982：6.",
+  "expected": {
+   "type": "map",
+   "title": "中国历史地图集",
+   "year": "1982",
+   "author": "谭其骧",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.12:8",
+  "text": "童世亨. 京兆直隶图[CM/OL]. 上海：商务印书馆，1926. http://gdt-lib-whu-edu-cn.vpn.whu.edu.cn:8118/imginfo.html?ty%3Dmap%26id%3D4861.",
+  "expected": {
+   "type": "map",
+   "title": "京兆直隶图",
+   "year": "1926",
+   "author": "童世亨",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.12:9",
+  "text": "Cribb R. Historical atlas of Indonesia[CM]. Abingdon：Routledge，2015.",
+  "expected": {
+   "type": "map",
+   "title": "Historical atlas of Indonesia",
+   "year": "2015",
+   "author": "Cribb",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.12:10",
+  "text": "Coastal wetlands map of China continent[CM]. Beijing：China Ocean Press，2024：50.",
+  "expected": {
+   "type": "map",
+   "title": "Coastal wetlands map of China continent",
+   "year": "2024",
+   "author": null,
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.13:1",
+  "text": "彭守璋. 1901—2024年中国1km分辨率逐月降水量数据集[DS/OL]. 国家地球系统科学数据中心（2025-07-07）[2025-07-15]. https://www.geodata.cn/main/face_science_detail?guid=192891852410344&typeName=face_science.",
+  "expected": {
+   "type": "dataset",
+   "title": "1901—2024年中国1km分辨率逐月降水量数据集",
+   "year": "2025",
+   "author": "彭守璋",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.13:2",
+  "text": "刘时银，郭万钦，许君利. 中国第二次冰川编目数据集：2006—2011[DS/OL]. V1.0. 国家青藏高原科学数据中心（2012）[2025-07-15]. https://data.tpdc.ac.cn/zh-hans/data/f92a4346-a33f-497d-9470-2b357ccb4246/. DOI:10.3972/glacier.001.2013.db.",
+  "expected": {
+   "type": "dataset",
+   "title": "中国第二次冰川编目数据集：2006—2011",
+   "year": "2012",
+   "author": "刘时银",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.13:3",
+  "text": "周壮，李盛阳，吴薇，等. 天宫二号遥感图像自然景物分类数据集[DS/OL]. V1.0. 国家基础学科公共科学数据中心（2023-09-10）[2025-07-15]. https://www.nbsdc.cn/general/dataLinks/CSTR:16666.11.nbsdc.tfpbwtqf.",
+  "expected": {
+   "type": "dataset",
+   "title": "天宫二号遥感图像自然景物分类数据集",
+   "year": "2023",
+   "author": "周壮",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.13:4",
+  "text": "郑涵，于贵瑞，朱先进，等. 2000—2010年中国典型陆地生态系统实际蒸散量和水分利用效率数据集[DS/OL]. V1. Science Data Bank（2018-05-26）[2025-02-14]. https://cstr.cn/31253.11.sciencedb.610. DOI:10.11922/sciencedb.610.",
+  "expected": {
+   "type": "dataset",
+   "title": "2000—2010年中国典型陆地生态系统实际蒸散量和水分利用效率数据集",
+   "year": "2018",
+   "author": "郑涵",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.13:5",
+  "text": "黄土高原科学数据中心（西北农林科技大学水土保持研究所）. 青海省县域教育、卫生发展指标（2001—2022年）[DS/OL]. 国家地球系统科学数据中心-黄土高原分中心（2024-12-25）[2025-07-10]. https://loess.geodata.cn/data/datadetails.html?dataguid=58691800703558. DOI:10.12041/geodata.58691800703558.ver1.db.",
+  "expected": {
+   "type": "dataset",
+   "title": "青海省县域教育、卫生发展指标（2001—2022年）",
+   "year": "2024",
+   "author": "黄土高原科学数据中心（西北农林科技大学水土保持研究所）",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.13:6",
+  "text": "王继民，罗鹏程，赵常煜，等. 人文社会科学数据集检索方法研究的数据集[DS/OL]. V2.2. 北京大学开放研究数据平台（2025-06-11）[2025-07-11]. https://opendata.pku.edu.cn/dataset.xhtml?persistentId=doi:10.18170/DVN/R96MSN.",
+  "expected": {
+   "type": "dataset",
+   "title": "人文社会科学数据集检索方法研究的数据集",
+   "year": "2025",
+   "author": "王继民",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.13:7",
+  "text": "Sugarman L，Markham S. Students in a selective high school: some vocationally oriented data[DS/OL]. UK Data Service（1980）[2025-07-10]. https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=996. DOI:10.5255/UKDA-SN-996-1.",
+  "expected": {
+   "type": "dataset",
+   "title": "Students in a selective high school: some vocationally oriented data",
+   "year": "1980",
+   "author": "Sugarman",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.13:8",
+  "text": "Zhong X，Yan Q，Li G. Long time series nighttime light dataset of China: 2000–2020[DS/OL]. Global Change Research Data Publishing & Repository（2022）[2024-11-25]. https://www.geodoi.ac.cn/edoi.aspx?DOI=10.3974/geodb.2022.06.01.V1.",
+  "expected": {
+   "type": "dataset",
+   "title": "Long time series nighttime light dataset of China: 2000–2020",
+   "year": "2022",
+   "author": "Zhong",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.13:9",
+  "text": "IHME. Global Burden of Disease Study 2019 (GBD2019) data resources[DS/OL]. Global Health Data Exchange（2021）[2024-11-25]. https://ghdx.healthdata.org/gbd-2019.",
+  "expected": {
+   "type": "dataset",
+   "title": "Global Burden of Disease Study 2019 (GBD2019) data resources",
+   "year": "2021",
+   "author": "IHME",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.14:1",
+  "text": "方向明，曹迎杰. 元宇宙在图书馆的应用：理论研究与实践进展[PP/OL]. ChinaXiv（2023-03-03）[2024-09-30]. http://www.chinaxiv.org/abs/202303.00020. CSTR:32003.36.ChinaXiv.202303.00020.V1.",
+  "expected": {
+   "type": "article",
+   "title": "元宇宙在图书馆的应用：理论研究与实践进展",
+   "year": "2023",
+   "author": "方向明",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.14:2",
+  "text": "肖玲，张雪，王永. 数据要素的统计测算方法探究[PP/OL]. PSSXiv（2024-07-02）[2024-09-30]. https://zsyyb.cn/abs/202408.01096. CSTR:32012.36.PSSXiv.202408.01096.",
+  "expected": {
+   "type": "article",
+   "title": "数据要素的统计测算方法探究",
+   "year": "2024",
+   "author": "肖玲",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.14:3",
+  "text": "Bloss C S，Wineinger N E，Peters M，et al. A prospective randomized trial examining health care utilization in individuals using multiple smartphone-enabled biosensors[PP/OL]. bioRxiv（2015-10-28）[2018-07-12]. https://doi.org/10.1101/029983.",
+  "expected": {
+   "type": "article",
+   "title": "A prospective randomized trial examining health care utilization in individuals using multiple smartphone-enabled biosensors",
+   "year": "2015",
+   "author": "Bloss",
+   "container": null
+  }
+ },
+ {
+  "id": "gbt7714.b.14:4",
+  "text": "Jenkins S D，Ruostekoski J. Controlled manipulation of light by cooperative response of atoms in an optical lattice[PP/OL]. V2. arXiv（2012-03-18）[2020-06-24]. https://doi.org/10.48550/arXiv.1112.6136.",
+  "expected": {
+   "type": "article",
+   "title": "Controlled manipulation of light by cooperative response of atoms in an optical lattice",
+   "year": "2012",
+   "author": "Jenkins",
+   "container": null
+  }
+ }
+]

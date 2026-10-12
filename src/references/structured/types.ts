@@ -52,6 +52,7 @@ export type CslType =
   | 'software'
   | 'manuscript'
   | 'collection'
+  | 'periodical'
   | 'document'
 
 export interface CslDate {
