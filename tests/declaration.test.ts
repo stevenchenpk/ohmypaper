@@ -116,3 +116,22 @@ describe('披露要求与措辞', () => {
     }
   })
 })
+
+describe('declarationSchool', () => {
+  it('优先用格式体检里选的学校', async () => {
+    const { declarationSchool } = await import('../src/declaration/generate')
+    const { emptyDossier } = await import('../src/dossier/schema')
+    const d = emptyDossier()
+    d.profile.school = 'fudan'
+    d.resume = { format: { filename: 'a.docx', at: '2026-10-12T00:00:00.000Z', schoolPath: 'schools/scu/bachelor-2026.yaml', schoolLabel: '四川大学', counts: { error: 0, warning: 0, info: 0, passed: 0, skipped: 0 } } }
+    expect(declarationSchool(d)).toEqual({ path: 'schools/scu/bachelor-2026.yaml', label: '四川大学' })
+  })
+  it('没有格式体检记录时退回旧 profile.school；都没有时为 null', async () => {
+    const { declarationSchool } = await import('../src/declaration/generate')
+    const { emptyDossier } = await import('../src/dossier/schema')
+    const d = emptyDossier()
+    expect(declarationSchool(d)).toBeNull()
+    d.profile.school = 'fudan'
+    expect(declarationSchool(d)).toEqual({ path: null, label: 'fudan' })
+  })
+})

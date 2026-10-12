@@ -178,3 +178,15 @@ export function generateDeclaration(dossier: Dossier, policy: AiPolicy | null, o
 
   return { text, markdown: md, warnings: findWarnings(log, policy), missing: findMissing(log, policy) }
 }
+
+/**
+ * 声明对照哪所学校的 ai_policy。
+ * 页面上没有单独的"档案编辑"表单，学校来自格式体检里选的那一项（resume.format.schoolPath）；
+ * 旧版导出文件里 profile.school 有值时作为后备。都没有时返回 null，调用方传 policy = null。
+ */
+export function declarationSchool(d: Dossier): { path: string | null; label: string } | null {
+  const f = d.resume?.format
+  if (f?.schoolPath) return { path: f.schoolPath, label: f.schoolLabel ?? f.schoolPath }
+  if (d.profile.school) return { path: null, label: d.profile.school }
+  return null
+}

@@ -15,6 +15,8 @@ generateDeclaration(dossier: Dossier, policy: AiPolicy | null, opts?: { confirmN
 
 `policy` 取自学校数据的 `ai_policy`（`AiPolicy` 类型与 `schools/schema.json` 一致）；学校未选或没有数据时传 `null`。
 
+学校从哪里来：用 `declarationSchool(dossier)`。页面没有单独的档案编辑表单，学校取自格式体检里选的那一项（`dossier.resume.format.schoolPath`，如 `schools/fudan/bachelor-2026.yaml`），用这个路径到 `schools/` 里找对应档案的 `ai_policy`。旧版导出文件里 `profile.school` 有值时只作后备，此时没有路径，`path` 为 `null`，UI 应请学生在格式体检里重新选学校。两处都没有时返回 `null`，`policy` 传 `null`，声明里不附学校要求。
+
 ## 行为
 
 - `ai_log` 为空且未传 `confirmNone: true`：`text`、`markdown` 为空串，`missing = ['还没有 AI 使用记录']`。UI 应让学生明确点“我确认没有用过”后再传 `confirmNone: true`，此时输出“本人在论文写作过程中未使用生成式人工智能工具。”。
