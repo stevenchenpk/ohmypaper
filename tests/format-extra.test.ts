@@ -193,3 +193,37 @@ describe('自动编号的标题', () => {
     expect(r.passed.map((p) => p.item)).not.toContain('一级标题编号写法')
   })
 })
+
+describe('盲审匿名不打绿勾', () => {
+  const blindProfile = {
+    school: { name: '测试大学', code: 'test' }, degree: 'master', cohort: 2026, status: 'draft',
+    sources: [{ title: '规范', url: 'https://example.edu.cn' }], maintainers: [], last_verified: '2026-10-11',
+    format: { blind_review: '送审论文须隐去作者和导师信息' },
+  } as const
+
+  it('文档属性没有作者名时，不记通过，记"未检查"并写明没查的范围', () => {
+    const m = { ...model([['第一章 绪论', H1], ['作者：张同学，学号 2022141234567'], ['正文。']]), reviewAuthors: ['李老师'] }
+    const r = checkModel(m, blindProfile as never)
+    const items = r.passed.map((p) => p.item)
+    expect(items).not.toContain('文档属性中的作者信息')
+    expect(items.some((i) => /匿名|作者/.test(i))).toBe(false)
+    const s = r.skipped.find((p) => p.item === '盲审匿名')!
+    expect(s).toBeDefined()
+    expect(s.reason).toContain('文档属性里没有作者名')
+    expect(s.reason).toContain('批注和修订的作者')
+    expect(s.reason).toContain('李老师')
+  })
+
+  it('有作者名时照常警告，并且仍有"未检查"项', () => {
+    const m = { ...model([['正文。']]), authors: ['张三'] }
+    const r = checkModel(m, blindProfile as never)
+    expect(r.issues.find((i) => i.id === 'cleanup-author-metadata')?.severity).toBe('warning')
+    expect(r.skipped.map((p) => p.item)).toContain('盲审匿名')
+  })
+
+  it('不要求盲审时，属性里没作者名可以记通过，但不叫匿名', () => {
+    const r = checkModel(model([['正文。']]), null)
+    expect(r.passed.map((p) => p.item)).toContain('文档属性中的作者信息')
+    expect(r.skipped.map((p) => p.item)).not.toContain('盲审匿名')
+  })
+})

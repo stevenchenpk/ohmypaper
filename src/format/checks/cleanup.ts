@@ -39,6 +39,7 @@ export function checkCleanup(ctx: CheckContext) {
   }
 
   const blind = ctx.profile?.format?.blind_review
+  const reviewers = doc.reviewAuthors ?? []
   if (doc.authors.length) {
     ctx.add({
       id: 'cleanup-author-metadata', category: 'cleanup', severity: blind ? 'warning' : 'info',
@@ -47,5 +48,13 @@ export function checkCleanup(ctx: CheckContext) {
       detail: '盲审时这会暴露身份。在 Word 的"文件 → 信息 → 检查问题 → 检查文档"里删除文档属性和个人信息。',
       basis: blind ? `${ctx.schoolBasis}（盲审要求）` : '提交前自查',
     })
-  } else ctx.pass('cleanup', '文档属性中的作者信息')
+  } else if (!blind) ctx.pass('cleanup', '文档属性中的作者信息')
+
+  // 盲审匿名化不能打绿勾：工具只看了文档属性，正文和批注修订里的身份信息都没查
+  if (blind) {
+    const checked = doc.authors.length ? '文档属性里留有作者名（见上）' : '文档属性里没有作者名'
+    const reviewNote = reviewers.length ? `批注和修订上记的作者有：${reviewers.join('、')}，提交前请一并删除。` : ''
+    ctx.skip('cleanup', '盲审匿名',
+      `本工具只看了文档属性：${checked}。但正文、封面、致谢、页眉页脚里的姓名、学号、导师姓名，以及批注和修订的作者，都没有检查，请按学校盲审要求自己核对。${reviewNote}`)
+  }
 }

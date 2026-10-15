@@ -105,6 +105,8 @@ export interface DocxModel {
   highlights: number
   /** 文档属性里的作者、最后修改者 */
   authors: string[]
+  /** 批注和修订上记的作者名（w:author），没有读到时为空 */
+  reviewAuthors?: string[]
   evenAndOddHeaders: boolean
   /** 脚注、尾注条数（不含分隔符） */
   footnotes: number
@@ -693,6 +695,10 @@ export function parseDocx(data: Uint8Array): DocxModel {
     comments: commentsDoc ? descendants(commentsDoc, 'comment').length : 0,
     highlights,
     authors: [...new Set(authors)],
+    reviewAuthors: [...new Set([
+      ...(commentsDoc ? descendants(commentsDoc, 'comment') : []),
+      ...REVISION_TAGS.flatMap((tag) => descendants(body, tag)),
+    ].map((e) => (attr(e, 'author') ?? '').trim()).filter(Boolean))],
     evenAndOddHeaders,
     footnotes: notes('word/footnotes.xml', 'footnote'),
     endnotes: notes('word/endnotes.xml', 'endnote'),

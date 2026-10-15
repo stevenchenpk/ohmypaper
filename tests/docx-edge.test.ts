@@ -22,6 +22,12 @@ describe('修订', () => {
     expect(d.trackedChanges).toBe(2)
   })
 
+  it('读出批注和修订上记的作者名（盲审提示用）', () => {
+    const comments = `<?xml version="1.0"?><w:comments xmlns:w="${W}"><w:comment w:id="0" w:author="李老师"><w:p>${run('改一下')}</w:p></w:comment></w:comments>`
+    const d = parseDocx(docx(`<w:p><w:ins w:id="1" w:author="张同学">${run('新增')}</w:ins></w:p>`, { 'word/comments.xml': comments }))
+    expect(d.reviewAuthors?.sort()).toEqual(['张同学', '李老师'].sort())
+  })
+
   it('整段移动（段落标记也带 moveFrom）不留下文字', () => {
     const d = parseDocx(docx(`<w:p><w:pPr><w:rPr><w:moveFrom w:id="3" w:author="a"/></w:rPr></w:pPr><w:moveFrom w:id="4" w:author="a">${run('旧')}</w:moveFrom></w:p>`))
     expect(d.paragraphs[0].text).toBe('')
