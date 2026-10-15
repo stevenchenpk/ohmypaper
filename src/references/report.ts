@@ -20,6 +20,9 @@ export function countByStatus(results: VerifyResult[]): Map<VerifyStatus, number
   return counts
 }
 
+/** 导出里也要写明：需人工核对、查询失败都不算通过 */
+export const TIER_NOTE = '“需人工核对”的条目要你自己找原文核对；“查询失败”是没查成，暂时不能下结论。这两种都不算通过。'
+
 export function toTextReport(results: VerifyResult[], checkedAt: Date): string {
   const counts = countByStatus(results)
   const summary = STATUS_ORDER.filter((s) => counts.get(s))
@@ -29,7 +32,8 @@ export function toTextReport(results: VerifyResult[], checkedAt: Date): string {
     'ohmypaper 参考文献核验报告',
     `核验时间：${checkedAt.toLocaleString('zh-CN', { hour12: false })}`,
     `共 ${results.length} 条：${summary}`,
-    '数据来源：Crossref、OpenAlex。中文文献需人工到知网等平台核对。',
+    TIER_NOTE,
+    '数据来源：Crossref、OpenAlex、DataCite 等公开学术服务。中文文献需人工到知网等平台核对。',
     '',
   ]
   for (const r of [...results].sort((a, b) => a.ref.index - b.ref.index)) {
@@ -64,5 +68,5 @@ export function toCsv(results: VerifyResult[]): string {
       r.similarity === null ? '' : r.similarity.toFixed(2),
     ])
   // 加 BOM，Excel 打开中文不乱码
-  return '﻿' + [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n')
+  return '﻿' + [[`说明：${TIER_NOTE}`], header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n')
 }
