@@ -32,6 +32,20 @@ function editionLabel(edition: Edition, profile: SchoolProfile | null): string {
   return `GB/T 7714—${edition}${explicit ? '' : '（学校档案未指定版本，按现行版检查）'}`
 }
 
+/**
+ * 用哪种引用体例检查。档案写明了顺序编码制或著者-出版年制就照办；
+ * 学校两种都认（either）、查过没有依据（unknown）或还没填（null）时，看学生实际用的是哪种：
+ * 文献表带序号就按顺序编码制，否则按著者-出版年制。不能默认顺序编码制，
+ * 否则用著者-出版年制的学生会被报"没有序号"。
+ */
+export function citationStyleFor(
+  declared: NonNullable<SchoolProfile['references']>['style'] | undefined,
+  entriesNumbered: boolean,
+): { value: 'numeric' | 'author-year'; inferred: boolean } {
+  if (declared === 'numeric' || declared === 'author-year') return { value: declared, inferred: false }
+  return { value: entriesNumbered ? 'numeric' : 'author-year', inferred: true }
+}
+
 function expandCitation(s: string): number[] {
   const out: number[] = []
   for (const part of s.split(/[,，、]/)) {
@@ -53,7 +67,6 @@ export function checkReferences(ctx: CheckContext) {
   const refRule = profile?.references
   const edition = editionFor(profile)
   const basis = editionLabel(edition, profile)
-  const style = refRule?.style ?? 'numeric'
 
   if (refRule?.standard === 'APA-7' || refRule?.standard === 'other') {
     ctx.skip('references', '参考文献格式', `学校要求 ${refRule.standard}，目前只支持 GB/T 7714`)
@@ -79,8 +92,19 @@ export function checkReferences(ctx: CheckContext) {
     if (m) return Number(m[1])
     return p.numbered ? i + 1 : null
   })
-  if (style === 'numeric') {
-    const dotted = entries.filter((p) => !MANUAL_NO.test(p.text) && DOTTED_NO.test(p.text))
+  const dotted = entries.filter((p) => !MANUAL_NO.test(p.text) && DOTTED_NO.test(p.text))
+  const style = citationStyleFor(refRule?.style, numbers.some((n) => n !== null) || dotted.length > 0)
+  if (style.inferred) {
+    ctx.add({
+      id: 'refs-style-inferred', category: 'references', severity: 'info',
+      title: style.value === 'numeric' ? '按顺序编码制检查参考文献' : '按著者-出版年制检查参考文献',
+      detail: style.value === 'numeric'
+        ? '学校档案没有规定用哪种引用体例，你的参考文献带序号，所以按顺序编码制检查序号和正文引用。'
+        : '学校档案没有规定用哪种引用体例，你的参考文献不带序号，所以按著者-出版年制处理，不检查序号。',
+      basis,
+    })
+  }
+  if (style.value === 'numeric') {
     const missing = entries.filter((p, i) => numbers[i] === null && !dotted.includes(p))
     if (dotted.length) {
       ctx.addForParagraphs(dotted, {
@@ -183,7 +207,7 @@ export function checkReferences(ctx: CheckContext) {
   const entryRule = profile?.format?.reference_entries
   if (entryRule) checkTextStyle(ctx, { category: 'references', label: '参考文献条目', id: 'refs-style', paragraphs: entries, rule: entryRule })
 
-  if (style === 'numeric') checkCitations(ctx, entries, numbers, basis)
+  if (style.value === 'numeric') checkCitations(ctx, entries, numbers, basis)
   else ctx.skip('references', '正文引用顺序', '著者-出版年制不检查引用顺序')
 }
 

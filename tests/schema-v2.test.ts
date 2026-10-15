@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { crossCheck } from '../scripts/school-crosscheck.mjs'
 import type { SchoolProfile } from '../src/format/profile'
 import { ruleStatus } from '../src/format/rule-status'
+import { citationStyleFor } from '../src/format/checks/references'
 
 const schema = JSON.parse(readFileSync(join(__dirname, '../schools/schema.json'), 'utf8'))
 const validate = new Ajv({ allErrors: true, strict: false }).compile(schema)
@@ -109,5 +110,17 @@ describe('规则结论分三类', () => {
     p.provenance!['/format/margins_cm'].authority = 'department_notice'
     expect(ruleStatus(p, '/format/margins_cm')).toBe('advisory')
     expect(ruleStatus(p, '/format/margins_cm', { department: '计算机学院' })).toBe('confirmed')
+  })
+})
+
+describe('引用体例：学校没规定时看学生实际用的哪种', () => {
+  it('学校写明了就照办', () => {
+    expect(citationStyleFor('numeric', false)).toEqual({ value: 'numeric', inferred: false })
+    expect(citationStyleFor('author-year', true)).toEqual({ value: 'author-year', inferred: false })
+  })
+
+  it.each(['either', 'unknown', null, undefined] as const)('%s：文献表带序号按顺序编码制，不带序号按著者-出版年制', (declared) => {
+    expect(citationStyleFor(declared, true)).toEqual({ value: 'numeric', inferred: true })
+    expect(citationStyleFor(declared, false)).toEqual({ value: 'author-year', inferred: true })
   })
 })

@@ -42,7 +42,8 @@ export interface SchoolProfile {
   last_verified: string
   references?: {
     standard?: 'GB/T 7714-2015' | 'GB/T 7714-2025' | 'APA-7' | 'other' | null
-    style?: 'numeric' | 'author-year' | null
+    /** numeric 顺序编码制；author-year 著者-出版年制；either 两种都认；unknown 查过学校文件，没有规定 */
+    style?: 'numeric' | 'author-year' | 'either' | 'unknown' | null
     min_count?: number | null
     min_foreign?: number | null
   }

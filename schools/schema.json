@@ -155,9 +155,11 @@
           "enum": [
             "numeric",
             "author-year",
+            "either",
+            "unknown",
             null
           ],
-          "description": "顺序编码制或著者-出版年制"
+          "description": "引用体例：numeric 顺序编码制；author-year 著者-出版年制；either 学校两种都认；unknown 查过学校文件，没有规定或找不到依据；null 还没查"
         },
         "min_count": {
           "type": [
