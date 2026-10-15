@@ -3,7 +3,7 @@ import { exportDossier, importDossier, libraryFromResults } from '../src/dossier
 import { migrate } from '../src/dossier/migrate'
 import { DOSSIER_VERSION, emptyDossier, validate } from '../src/dossier/schema'
 import { STORAGE_KEY, createStore } from '../src/dossier/store'
-import { citationCountsText, citationResume, formatCountsText, formatResume, formatTime, hasResume, previousSessionLabel, withResume } from '../src/dossier/resume'
+import { citationCountsText, citationResume, formatCountsText, formatResume, formatTime, hasResume, importConfirmText, previousSessionLabel, withResume } from '../src/dossier/resume'
 import { parseReference } from '../src/references/parse'
 import { verifyReference } from '../src/references/verify'
 import { MOCK_DB, mockFetcher } from './fixtures/mock-sources'
@@ -267,5 +267,25 @@ describe('继续上次检查', () => {
   it('不含任何"通过"字样来描述未核实的状态', async () => {
     const c = citationResume(text, await run(), NOW)
     expect(citationCountsText(c)).not.toContain('通过')
+  })
+})
+
+describe('导入前确认', () => {
+  const at = new Date('2026-10-01T08:00:00Z')
+  const withCitation = () => withResume(emptyDossier(at), { citation: citationResume('[1] X', [], at) }, at)
+
+  it('当前是空档案时不需要确认', () => {
+    expect(importConfirmText(emptyDossier(at), withCitation())).toBeNull()
+  })
+
+  it('当前有记录时要确认，写明会替换什么；导入文件没有 resume 时说明', () => {
+    const t = importConfirmText(withCitation(), emptyDossier(at))!
+    expect(t).toContain('整份替换')
+    expect(t).toContain('参考文献核验记录')
+    expect(t).toContain('没有可恢复的检查记录')
+  })
+
+  it('导入文件有 resume 时不提示"没有记录"', () => {
+    expect(importConfirmText(withCitation(), withCitation())).not.toContain('没有可恢复')
   })
 })

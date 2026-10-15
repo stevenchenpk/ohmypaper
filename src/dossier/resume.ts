@@ -7,7 +7,7 @@
  */
 
 import type { VerifyResult, VerifyStatus } from '../references/verify'
-import type { CitationResume, Dossier, FormatResume, Resume } from './schema'
+import { type CitationResume, type Dossier, type FormatResume, type Resume, hasContent } from './schema'
 
 export const STATUS_LABEL: Record<VerifyStatus, string> = {
   verified: '已核实',
@@ -74,4 +74,20 @@ export function formatCountsText(f: FormatResume): string {
 /** 恢复区的标题，明确这不是本次的核验 */
 export function previousSessionLabel(iso: string): string {
   return `上次会话的记录（${formatTime(iso)}），不是本次核验`
+}
+
+/**
+ * 导入会整份替换当前档案。当前有内容时返回要 confirm 的提示文字（说明会替换掉什么），
+ * 当前是空的返回 null，直接导入。
+ */
+export function importConfirmText(current: Dossier, incoming: Dossier): string | null {
+  if (!hasContent(current)) return null
+  const lost: string[] = []
+  if (current.resume?.citation) lost.push(`参考文献核验记录（${formatTime(current.resume.citation.at)}）`)
+  if (current.resume?.format) lost.push(`格式体检记录（${formatTime(current.resume.format.at)}，${current.resume.format.filename}）`)
+  if (current.library.length) lost.push(`${current.library.length} 条文献库条目`)
+  if (current.ai_log.length) lost.push(`${current.ai_log.length} 条 AI 使用记录`)
+  const what = lost.length ? lost.join('、') : '已填写的信息'
+  const none = hasResume(incoming) ? '' : '\n注意：要导入的文件里没有可恢复的检查记录，导入后"继续上次检查"将没有内容。'
+  return `导入会整份替换这个浏览器里现有的记录：${what}。替换后无法恢复，如需保留请先点"导出"。${none}\n\n确定导入吗？`
 }

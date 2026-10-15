@@ -4,7 +4,7 @@
  */
 
 import { EXPORT_FILENAME, exportDossier, importDossier } from './io'
-import { citationCountsText, formatCountsText, formatTime, hasResume, previousSessionLabel } from './resume'
+import { citationCountsText, formatCountsText, formatTime, hasResume, importConfirmText, previousSessionLabel } from './resume'
 import type { Dossier } from './schema'
 import type { DossierStore } from './store'
 
@@ -46,6 +46,11 @@ export function mountResumeBar(container: HTMLElement, opts: ResumeBarOptions): 
   async function doImport(file: File) {
     try {
       const d = importDossier(await file.text())
+      const ask = importConfirmText(dossier, d)
+      if (ask && !confirm(ask)) {
+        message = '已取消导入，原有记录没有改动。'
+        return render()
+      }
       dossier = d
       await store.save(d)
       opts.onChange(d)
