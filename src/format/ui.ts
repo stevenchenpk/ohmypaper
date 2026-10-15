@@ -6,8 +6,8 @@ import { DocxError } from './docx'
 import { checkDocx } from './engine'
 import type { WorkerRequest, WorkerResponse } from './worker'
 import { type SchoolProfile, profileLabel } from './profile'
-import { CATEGORY_LABEL, type Category, type CitationMap, type Issue, type Report, type Severity, severityLabel } from './report'
-import { type VerifyLink, citationNotes, citationRows, citationSummary, verifyCallouts } from './citationView'
+import { CATEGORY_LABEL, type Category, type Issue, type Report, type Severity, severityLabel } from './report'
+import { type MapView, type VerifyLink, authorYearView, numericView } from './citationView'
 
 // 构建时把 schools/ 下的档案全部打进页面，运行时不联网
 const raw = import.meta.glob('../../schools/*/*.yaml', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
@@ -54,20 +54,24 @@ function renderIssue(i: Issue, hasProfile: boolean): HTMLElement {
  * 引用对账表：折叠的 <details>，标题上直接写概况。
  * 送去核验之后，每条加上核验结果；查无此文、信息不符的，在表格外面列出正文里引用它的位置。
  */
-function renderCitationMap(map: CitationMap, verify: (VerifyLink | undefined)[]): HTMLElement {
+function renderCitationMap(report: Report, verify: (VerifyLink | undefined)[]): HTMLElement | null {
+  const view: MapView | null = report.citationMap
+    ? numericView(report.citationMap, verify)
+    : report.authorYearMap ? authorYearView(report.authorYearMap, verify) : null
+  if (!view) return null
   const box = el('div', { className: 'cmap' })
-  const callouts = verifyCallouts(map, verify)
+  const callouts = view.callouts
   if (callouts.length) {
     box.append(
       el('p', { className: 'cmap-lead' }, '核验有问题的文献在正文中的引用位置：'),
       el('ul', { className: 'cmap-bad' }, ...callouts.map((t) => el('li', {}, t))),
     )
   }
-  const d = el('details', { className: 'notes cmap-table' }, el('summary', {}, '引用对账表', el('span', { className: 'cmap-sum' }, citationSummary(map))))
-  for (const n of citationNotes(map)) d.append(el('p', { className: 'note' }, n))
+  const d = el('details', { className: 'notes cmap-table' }, el('summary', {}, '引用对账表', el('span', { className: 'cmap-sum' }, view.summary)))
+  for (const n of view.notes) d.append(el('p', { className: 'note' }, n))
   const verified = verify.some(Boolean)
-  const rows = citationRows(map, verify)
-  const list = el('ol', { className: 'cmap-rows' })
+  const rows = view.rows
+  const list = el('ol', { className: view.wideLabel ? 'cmap-rows wide' : 'cmap-rows' })
   for (const r of rows) {
     const main = el('div', { className: 'cmap-main' }, el('span', { className: `cmap-tone tone-${r.citedTone}` }, r.cited))
     if (r.where) main.append(el('span', { className: 'ctx' }, r.where))
@@ -77,7 +81,7 @@ function renderCitationMap(map: CitationMap, verify: (VerifyLink | undefined)[])
     list.append(el('li', {}, el('span', { className: 'cmap-n mono' }, r.label), main, el('span', { className: 'cmap-v' }, v)))
   }
   d.append(list)
-  if (!verified && map.references.length) d.append(el('p', { className: 'note' }, '每条的核验结果显示在“未送核验”的位置：点下面的按钮把参考文献填入引用核验，确认后开始核验，这里会标出结果。'))
+  if (!verified && rows.length) d.append(el('p', { className: 'note' }, '每条的核验结果显示在“未送核验”的位置：点下面的按钮把参考文献填入引用核验，确认后开始核验，这里会标出结果。'))
   box.append(d)
   return box
 }
@@ -124,7 +128,7 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
   }
   if (r.passed.length) nodes.push(details(`通过的 ${r.passed.length} 项`, r.passed.map((p) => `${CATEGORY_LABEL[p.category]} · ${p.item}`)))
 
-  const cmap = r.citationMap ? renderCitationMap(r.citationMap, []) : null
+  const cmap = renderCitationMap(r, [])
   if (cmap) nodes.push(cmap)
 
   if (r.references.length) {
@@ -234,9 +238,10 @@ export function mountFormatCheck(opts: { onReferences: (refs: string[]) => void;
      * 只有和当前体检报告抽出的参考文献完全一致时才对上，否则不显示（避免张冠李戴）。
      */
     showVerify(refs: string[], results: (VerifyLink | undefined)[]) {
-      if (!shown?.cmap || !shown.report.citationMap) return
+      if (!shown?.cmap) return
       const same = refs.length === shown.report.references.length && refs.every((t, i) => t === shown!.report.references[i])
-      const next = renderCitationMap(shown.report.citationMap, same ? results : [])
+      const next = renderCitationMap(shown.report, same ? results : [])
+      if (!next) return
       const open = shown.cmap.querySelector('details')?.open ?? false
       next.querySelector('details')!.open = open
       shown.cmap.replaceWith(next)

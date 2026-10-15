@@ -25,6 +25,8 @@ export interface AuthorYearCitation {
   suffix: string | null
   paragraph: number
   narrative: boolean
+  /** 对上的文献表条目下标；没对上或区分不出是哪篇为 null */
+  entry: number | null
 }
 
 export interface AuthorYearEntry {
@@ -53,6 +55,8 @@ export interface AuthorYearReconciliation {
   uncited: number[]
   /** 读不出著者或年份的文献表条目（entries 下标） */
   unreadEntries: number[]
+  /** 可能被引用、但区分不出（年份对不上或同年多篇没写后缀）的条目（entries 下标） */
+  maybeCited: number[]
   /** 像引用却认不出著者的写法 */
   unresolved: { raw: string; paragraph: number }[]
   /** 正文里的脚注、尾注引用标记个数（脚注里的引用读不到） */
@@ -134,11 +138,11 @@ export function authorYearCitationsIn(p: Paragraph, knownCn: string[]): { citati
       } else author = before.match(WESTERN_BEFORE)?.[1] ?? null
       const years = parseYears(inner)
       if (!author) {
-        unresolved.push(`${before.slice(-8).trim()}${m[0]}`)
+        unresolved.push(`${before.slice(-8).split(/[。；;，,：:！？!?]/).pop()!.trim()}${m[0]}`)
         continue
       }
       const raw = `${before.slice(before.lastIndexOf(author))}${m[0]}`
-      for (const y of years) citations.push({ raw, author, ...y, paragraph: p.index, narrative: true })
+      for (const y of years) citations.push({ raw, author, ...y, paragraph: p.index, narrative: true, entry: null })
       continue
     }
 
@@ -153,7 +157,7 @@ export function authorYearCitationsIn(p: Paragraph, knownCn: string[]): { citati
         unresolved.push(t)
         continue
       }
-      for (const y of parseYears(im[2])) citations.push({ raw: t, author, ...y, paragraph: p.index, narrative: false })
+      for (const y of parseYears(im[2])) citations.push({ raw: t, author, ...y, paragraph: p.index, narrative: false, entry: null })
     }
   }
   return { citations, unresolved }
@@ -183,6 +187,7 @@ export function reconcileAuthorYear(doc: DocxModel, s: Structure): AuthorYearRec
   /** 可能被引用（区分不出是哪篇）的条目，不算"没被引用" */
   const maybeCited = new Set<number>()
   const cite = (i: number, ci: number) => {
+    citations[ci].entry = i
     entries[i].timesCited++
     if (entries[i].firstCitation === null) entries[i].firstCitation = ci
   }
@@ -224,6 +229,7 @@ export function reconcileAuthorYear(doc: DocxModel, s: Structure): AuthorYearRec
   const uncited = entries.flatMap((e, i) => (readable(i) && e.timesCited === 0 && !maybeCited.has(i) ? [i] : []))
   return {
     citations, entries, missing, yearMismatch, needSuffix, listSuffixMissing, uncited, unreadEntries, unresolved,
+    maybeCited: [...maybeCited].filter((i) => entries[i].timesCited === 0).sort((a, b) => a - b),
     noteRefs: paras.reduce((n, p) => n + p.noteRefs, 0),
   }
 }
