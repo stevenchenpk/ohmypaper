@@ -205,4 +205,27 @@ describe('GB/T 7714 版本：学校没写明时过渡期两版都认', () => {
     const r = checkModel(doc, withStandard(null))
     expect(serious(r).map((i) => i.id)).toContain('refs-page-range-hyphen')
   })
+
+  it('学校要求的不是 GB/T 7714：著录格式不查，引用对账照常做，不显示原始枚举值', () => {
+    const scu = parse(readFileSync(join(__dirname, '..', 'schools', 'scu', 'bachelor-2026.yaml'), 'utf8')) as SchoolProfile
+    expect(scu.references?.standard).toBe('other')
+    const base = checkDocx(load('bad.docx'), null)
+    const r = checkDocx(load('bad.docx'), scu)
+    expect(r.citationMap).not.toBeNull()
+    const citeIds = (x: typeof r) => x.issues.map((i) => i.id).filter((id) => id.startsWith('cite-')).sort()
+    expect(citeIds(base).length).toBeGreaterThan(0)
+    expect(citeIds(r)).toEqual(citeIds(base))
+    expect(r.issues.some((i) => /^refs-(surname|page|type)/.test(i.id))).toBe(false)
+    const note = r.skipped.find((x) => x.item === '参考文献著录格式')!
+    expect(note.reason).toContain('学校要求的参考文献格式不是 GB/T 7714')
+    expect(note.reason).toContain('著录格式这次没有检查')
+    const all = JSON.stringify([r.skipped, r.passed, r.issues])
+    expect(all).not.toMatch(/\bother\b/)
+  })
+
+  it('APA-7 时说明写成人话', () => {
+    const r = checkDocx(load('bad.docx'), withStandard('APA-7'))
+    expect(r.skipped.find((x) => x.item === '参考文献著录格式')?.reason).toContain('APA 第 7 版')
+    expect(r.citationMap).not.toBeNull()
+  })
 })

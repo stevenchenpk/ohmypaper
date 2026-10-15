@@ -75,8 +75,8 @@ export function checkModel(doc: DocxModel, profile: SchoolProfile | null): Repor
       references: s.refEntries.length,
     },
     references: s.refEntries.map(referenceText),
-    // 只对顺序编码制做对账；学校要求 APA 等其他格式时不做
-    citationMap: inferCitationStyle(doc, s, profile?.references?.style).style === 'numeric' && !/^(APA-7|other)$/.test(profile?.references?.standard ?? '') && s.refHeading !== null
+    // 只对顺序编码制做对账；对账和著录标准无关，学校要求的不是 GB/T 7714 时也照常做
+    citationMap: inferCitationStyle(doc, s, profile?.references?.style).style === 'numeric' && s.refHeading !== null
       ? citationMap(doc, s)
       : null,
   }

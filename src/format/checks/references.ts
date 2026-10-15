@@ -62,17 +62,16 @@ export function checkReferences(ctx: CheckContext) {
   const mode = editionFor(profile)
   // 两版都认时，以 2025 版逐条检查，再用 2015 版复核：只有 2015 版也不接受的才算不符
   const edition: Edition = mode === 'either' ? '2025' : mode
-  const basis = editionLabel(mode)
+  // 学校要求的不是 GB/T 7714：著录格式不查，但正文引用与文献表的对账和著录标准无关，照常做
+  const nonGbt = nonGbtNote(profile)
+  const basis = nonGbt ? ctx.schoolBasis || '顺序编码制' : editionLabel(mode)
   // 档案没写体例时按文档判断；判断为著者-出版年制的，不按顺序编码制查序号和对账
   const { style, inferred } = inferCitationStyle(ctx.doc, s, refRule?.style)
   const AUTHOR_YEAR_NOTE = inferred
     ? '学校档案没写引用体例；文献表没有序号、正文是"作者, 年份"的写法，按著者-出版年制处理，顺序编码制对账不适用'
     : '著者-出版年制不检查引用顺序'
 
-  if (refRule?.standard === 'APA-7' || refRule?.standard === 'other') {
-    ctx.skip('references', '参考文献格式', `学校要求 ${refRule.standard}，目前只支持 GB/T 7714`)
-    return
-  }
+  if (nonGbt) ctx.skip('references', '参考文献著录格式', nonGbt)
   if (s.refHeading === null) {
     ctx.add({
       id: 'refs-missing', category: 'references', severity: 'warning', title: '没有找到"参考文献"部分',
@@ -87,8 +86,57 @@ export function checkReferences(ctx: CheckContext) {
     return
   }
 
-  // 序号
   const numbers = entries.map(entryNumber)
+  if (!nonGbt) checkGbtEntries(ctx, entries, numbers, style, AUTHOR_YEAR_NOTE, mode, edition, basis)
+
+  // 出版年、外文条数
+  const noYear: Paragraph[] = []
+  let foreign = 0
+  for (const p of entries) {
+    const parsed = parseReference(referenceText(p), 0)
+    if (!parsed.isChinese) foreign++
+    if (parsed.year === null) noYear.push(p)
+  }
+  if (noYear.length) ctx.addForParagraphs(noYear, { id: 'refs-year', category: 'references', severity: 'warning', title: `没有找到出版年（${noYear.length} 条）`, detail: '每条文献都应著录出版年（网页写发布或修改日期）。', basis: basis })
+  else ctx.pass('references', '出版年')
+
+  // 条数要求
+  if (refRule?.min_count) {
+    if (entries.length < refRule.min_count) {
+      ctx.add({ id: 'refs-min-count', category: 'references', severity: 'error', title: '参考文献条数不够', expected: `至少 ${refRule.min_count} 条`, actual: `${entries.length} 条`, basis: ctx.schoolBasis })
+    } else ctx.pass('references', '参考文献条数')
+  }
+  if (refRule?.min_foreign) {
+    if (foreign < refRule.min_foreign) {
+      ctx.add({ id: 'refs-min-foreign', category: 'references', severity: 'error', title: '外文文献条数不够', expected: `至少 ${refRule.min_foreign} 条`, actual: `约 ${foreign} 条（按文字自动判断）`, basis: ctx.schoolBasis })
+    } else ctx.pass('references', '外文文献条数')
+  }
+
+  const entryRule = profile?.format?.reference_entries
+  if (entryRule) checkTextStyle(ctx, { category: 'references', label: '参考文献条目', id: 'refs-style', paragraphs: entries, rule: entryRule })
+
+  if (style === 'numeric') checkCitations(ctx, basis)
+  else ctx.skip('references', '正文引用与文献表对账', AUTHOR_YEAR_NOTE)
+}
+
+/**
+ * 学校要求的参考文献格式不是 GB/T 7714 时，给学生看的说明；是 GB/T 7714（或没写）时返回空串。
+ * 不显示 "other" 这类原始枚举值。
+ */
+export function nonGbtNote(profile: SchoolProfile | null): string {
+  const standard = profile?.references?.standard
+  if (standard !== 'APA-7' && standard !== 'other') return ''
+  const prov = profile?.provenance?.['/references/standard']
+  const said = standard === 'APA-7' ? 'APA 第 7 版' : (prov?.quote ?? prov?.check_note ?? '').trim()
+  return `学校要求的参考文献格式不是 GB/T 7714${said ? `（${said}）` : ''}，著录格式这次没有检查，请按学校要求自己核对；正文引用和文献表的对账照常检查`
+}
+
+/** GB/T 7714 的序号写法、逐条著录规则和重复条目 */
+function checkGbtEntries(
+  ctx: CheckContext, entries: Paragraph[], numbers: (number | null)[], style: 'numeric' | 'author-year',
+  AUTHOR_YEAR_NOTE: string, mode: EditionMode, edition: Edition, basis: string,
+) {
+  // 序号
   if (style !== 'numeric') ctx.skip('references', '参考文献序号', AUTHOR_YEAR_NOTE)
   else {
     const dotted = entries.filter((p) => !MANUAL_NO.test(shownText(p)) && DOTTED_NO.test(shownText(p)))
@@ -173,36 +221,7 @@ export function checkReferences(ctx: CheckContext) {
     })
   }
 
-  // 出版年、外文条数
-  const noYear: Paragraph[] = []
-  let foreign = 0
-  for (const p of entries) {
-    const parsed = parseReference(referenceText(p), 0)
-    if (!parsed.isChinese) foreign++
-    if (parsed.year === null) noYear.push(p)
-  }
-  if (noYear.length) ctx.addForParagraphs(noYear, { id: 'refs-year', category: 'references', severity: 'warning', title: `没有找到出版年（${noYear.length} 条）`, detail: '每条文献都应著录出版年（网页写发布或修改日期）。', basis })
-  else ctx.pass('references', '出版年')
-
   checkDuplicates(ctx, entries, numbers, basis)
-
-  // 条数要求
-  if (refRule?.min_count) {
-    if (entries.length < refRule.min_count) {
-      ctx.add({ id: 'refs-min-count', category: 'references', severity: 'error', title: '参考文献条数不够', expected: `至少 ${refRule.min_count} 条`, actual: `${entries.length} 条`, basis: ctx.schoolBasis })
-    } else ctx.pass('references', '参考文献条数')
-  }
-  if (refRule?.min_foreign) {
-    if (foreign < refRule.min_foreign) {
-      ctx.add({ id: 'refs-min-foreign', category: 'references', severity: 'error', title: '外文文献条数不够', expected: `至少 ${refRule.min_foreign} 条`, actual: `约 ${foreign} 条（按文字自动判断）`, basis: ctx.schoolBasis })
-    } else ctx.pass('references', '外文文献条数')
-  }
-
-  const entryRule = profile?.format?.reference_entries
-  if (entryRule) checkTextStyle(ctx, { category: 'references', label: '参考文献条目', id: 'refs-style', paragraphs: entries, rule: entryRule })
-
-  if (style === 'numeric') checkCitations(ctx, basis)
-  else ctx.skip('references', '正文引用与文献表对账', AUTHOR_YEAR_NOTE)
 }
 
 /** 可能漏读引用的原因；空串表示没有 */
