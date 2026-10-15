@@ -111,8 +111,10 @@ function splitAuthorsAndTitle(text: string): { authors: string[]; title: string 
 /**
  * APA 风格：Author, A. A., & Author, B. (2020). Title of work. Journal, 1(2), 3–4.
  * 年份放在作者后的括号里，题名紧跟其后。
+ * 括号必须紧跟作者段（作者段里不含数字），年份在 1900–2099 之间：
+ * 否则 "Nature, 2015, 521(7553): 436-444" 这类卷(期)会被当成 APA 年份。
  */
-const APA_RE = /^(.+?)\s*[(（](\d{4})[a-z]?(?:,[^)）]*)?[)）]\.?\s*(.+?[.?!])(?:\s|$)/
+const APA_RE = /^([^\d]+?)\s*[(（]((?:19|20)\d{2})[a-z]?(?:,[^)）]*)?[)）]\.?\s*(.+?[.?!])(?:\s|$)/
 
 function parseApa(text: string): { authors: string[]; title: string; year: number } | null {
   if (TYPE_RE.test(text)) return null

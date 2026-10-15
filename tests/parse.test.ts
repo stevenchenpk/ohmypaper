@@ -96,6 +96,20 @@ describe('APA 风格', () => {
     expect(r.title).toBe('Is attention all we need?')
   })
 
+  it('漏了 [J] 的 GB/T 条目：四位数期号不当成 APA 年份', () => {
+    const r = parseReference('LeCun Y, Bengio Y, Hinton G. Deep learning. Nature, 2015, 521(7553): 436-444.', 1)
+    expect(r.style).not.toBe('apa')
+    expect(r.year).toBe(2015)
+    expect(r.title).toBe('Deep learning')
+    const s = parseReference('Smith J. Some title. Science, 2019, 365(6449): 1-2.', 1)
+    expect(s.year).toBe(2019)
+    expect(s.style).not.toBe('apa')
+  })
+
+  it('括号里不是合理年份时不当成 APA', () => {
+    expect(parseReference('Wang L. Title. Journal, 2020, 12(1234): 5-6.', 1).year).toBe(2020)
+  })
+
   it('GB/T 7714 条目不会被当成 APA', () => {
     const r = parseReference('LECUN Y. Deep learning[J]. Nature, 2015 (521): 1-2.', 1)
     expect(r.style).toBe('gbt7714')
