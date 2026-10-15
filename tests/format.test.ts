@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
 import { DocxError, parseDocx } from '../src/format/docx'
-import { checkDocx } from '../src/format/engine'
+import { checkDocx, checkModel } from '../src/format/engine'
 import { cnToInt, headingNumber } from '../src/format/checks/headings'
 import { canonicalFont, describeSize, parseLineSpacing, parseSpacing, type SchoolProfile } from '../src/format/profile'
 
@@ -166,5 +166,43 @@ describe('压测样例：更贴近真实的合格论文不误报', () => {
     const body = doc.sections[doc.sections.length - 1]
     expect(body.footer?.hasPageField).toBe(true)
     expect(body.footer?.pageFieldAlign).toBe('center')
+  })
+})
+
+describe('GB/T 7714 版本：学校没写明时过渡期两版都认', () => {
+  // 把合格样例的第一条参考文献换成 2015 版写法（西文姓氏全大写）
+  const withOldStyle = () => {
+    const doc = parseDocx(load('good.docx'))
+    const p = doc.paragraphs.find((x) => x.text.includes('Deep learning[J]'))!
+    p.text = p.text.replace('LeCun Y, Bengio Y, Hinton G', 'LECUN Y, BENGIO Y, HINTON G')
+    return doc
+  }
+  const withStandard = (standard: NonNullable<SchoolProfile['references']>['standard']) =>
+    ({ ...profile, references: { ...profile.references, standard } }) as SchoolProfile
+
+  it('档案写明 2025 版：2015 版写法报不符', () => {
+    const r = checkModel(withOldStyle(), withStandard('GB/T 7714-2025'))
+    expect(serious(r).map((i) => i.id)).toContain('refs-surname-case')
+  })
+
+  it('档案没写版本：2015 版写法只给提示，不算不符', () => {
+    const r = checkModel(withOldStyle(), withStandard(null))
+    expect(serious(r).map((i) => i.id)).not.toContain('refs-surname-case')
+    const note = r.issues.find((i) => i.id === 'refs-surname-case-2015')!
+    expect(note.severity).toBe('info')
+    expect(note.basis).toContain('过渡期两版都认')
+  })
+
+  it('不选学校时同样两版都认', () => {
+    const r = checkModel(withOldStyle(), null)
+    expect(serious(r).map((i) => i.id)).not.toContain('refs-surname-case')
+  })
+
+  it('两版都不接受的写法照样报不符', () => {
+    const doc = parseDocx(load('good.docx'))
+    const p = doc.paragraphs.find((x) => x.text.includes('Deep learning[J]'))!
+    p.text = p.text.replace('436-444', '436~444')
+    const r = checkModel(doc, withStandard(null))
+    expect(serious(r).map((i) => i.id)).toContain('refs-page-range-hyphen')
   })
 })

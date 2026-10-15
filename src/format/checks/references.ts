@@ -21,16 +21,23 @@ const MANUAL_NO = /^\s*[[［]\s*(\d+)\s*[\]］]\s*/
 const DOTTED_NO = /^\s*(\d+)\s*[.．、]\s*/
 
 /**
- * 用哪一版国标：档案写明了就用档案的；没写时用现行的 2025 版
- * （2026-07-01 实施，2027 届起的论文基本都在实施之后提交）。
+ * 用哪一版国标：档案写明了就用档案的。没写明时（或没选学校）按过渡期处理，两版都认：
+ * GB/T 7714—2025 于 2026-07-01 实施，但有学校明确答复过渡期内两版都可以用
+ * （北京理工大学研究生院 2026-03 答复，见 bit-thesis 模板记录），
+ * 所以不能把 2015 版的写法判为"与规则不符"。
  */
-export function editionFor(profile: SchoolProfile | null): Edition {
-  return profile?.references?.standard === 'GB/T 7714-2015' ? '2015' : '2025'
+export type EditionMode = Edition | 'either'
+
+export function editionFor(profile: SchoolProfile | null): EditionMode {
+  const standard = profile?.references?.standard
+  if (standard === 'GB/T 7714-2015') return '2015'
+  if (standard === 'GB/T 7714-2025') return '2025'
+  return 'either'
 }
 
-function editionLabel(edition: Edition, profile: SchoolProfile | null): string {
-  const explicit = profile?.references?.standard
-  return `GB/T 7714—${edition}${explicit ? '' : '（学校档案未指定版本，按现行版检查）'}`
+function editionLabel(mode: EditionMode): string {
+  if (mode === 'either') return 'GB/T 7714—2015 或 2025（学校没有写明版本，过渡期两版都认）'
+  return `GB/T 7714—${mode}`
 }
 
 export function referenceText(p: Paragraph): string {
@@ -40,8 +47,10 @@ export function referenceText(p: Paragraph): string {
 export function checkReferences(ctx: CheckContext) {
   const { s, profile } = ctx
   const refRule = profile?.references
-  const edition = editionFor(profile)
-  const basis = editionLabel(edition, profile)
+  const mode = editionFor(profile)
+  // 两版都认时，以 2025 版逐条检查，再用 2015 版复核：只有 2015 版也不接受的才算不符
+  const edition: Edition = mode === 'either' ? '2025' : mode
+  const basis = editionLabel(mode)
   // 档案没写体例时按文档判断；判断为著者-出版年制的，不按顺序编码制查序号和对账
   const { style, inferred } = inferCitationStyle(ctx.doc, s, refRule?.style)
   const AUTHOR_YEAR_NOTE = inferred
@@ -99,9 +108,14 @@ export function checkReferences(ctx: CheckContext) {
   // 这两种都记"无法判断"，不能算通过。
   const views = entries.map((p) => analyzeEntry(referenceText(p)))
   const issuesOf = entries.map((p, i) => checkEntry(referenceText(p), i + 1, { edition }))
+  const issues2015 = mode === 'either' ? entries.map((p, i) => checkEntry(referenceText(p), i + 1, { edition: '2015' })) : null
+  /** 这条按 2025 版不符，但按 2015 版是允许的写法 */
+  const acceptedBy2015 = (ruleId: string, i: number): boolean =>
+    issues2015 !== null && !issues2015[i].some((x) => x.ruleId === ruleId)
   for (const rule of RULES) {
     if (!rule.severity[edition]) continue
     const bad: Paragraph[] = []
+    const oldStyle: Paragraph[] = []
     const messages: string[] = []
     let ok = 0, unknown = 0
     let severity: 'error' | 'warning' | 'info' = rule.severity[edition]!
@@ -113,12 +127,23 @@ export function checkReferences(ctx: CheckContext) {
       }
       if (AUTHOR_RULES.has(rule.id) && v.authorSegment === null) return void unknown++
       const hit = issuesOf[i].find((x) => x.ruleId === rule.id)
-      if (hit) {
+      if (hit && acceptedBy2015(rule.id, i)) {
+        oldStyle.push(p)
+        ok++
+      } else if (hit) {
         bad.push(p)
         messages.push(hit.message)
         severity = hit.severity
       } else ok++
     })
+    if (oldStyle.length) {
+      ctx.addForParagraphs(oldStyle, {
+        id: `refs-${rule.id}-2015`, category: 'references', severity: 'info',
+        title: `${rule.title}：按 2015 版写法（${oldStyle.length} 条）`,
+        detail: '这几条符合 GB/T 7714—2015，但不符合 2025 版。学校没有写明版本，过渡期两版都可以用；如果学院通知要求 2025 版，请按 2025 版改。',
+        basis,
+      })
+    }
     if (bad.length === 0) {
       if (ok + unknown > 0) ctx.settle('references', rule.title, ok, unknown, '条')
       continue

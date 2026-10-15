@@ -20,7 +20,7 @@ maintainers: [your-github-name]
 last_verified: 2026-10-11
 
 references:
-  standard: GB/T 7714-2015  # 注意：GB/T 7714-2025 已于 2026-07-01 实施，以学校文件为准
+  standard: null  # 学校文件写明版本才填 GB/T 7714-2015 或 GB/T 7714-2025；没写明就留空，引擎按过渡期两版都认
   style: numeric
   min_count: null
   min_foreign: null
