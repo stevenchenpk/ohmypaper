@@ -65,14 +65,49 @@ export function extractDoi(text: string): string | null {
   return m[1].replace(/[.,;)\]】）]+$/, '').toLowerCase()
 }
 
-const TYPE_RE = /\[(J|M|D|C|N|R|S|P|G|A|Z|DB|CP|EB|DS|CM|AO)(?:\/(?:OL|MT|DK|CD))?\]/
+// 从知网复制的条目常用全角方括号：［J］
+const TYPE_RE = /[\[［](J|M|D|C|N|R|S|P|G|A|Z|DB|CP|EB|DS|CM|AO)(?:\/(?:OL|MT|DK|CD))?[\]］]/
 
+const YEAR_RE = /(?<!\d)((?:19|20)\d{2})(?!\d)/g
+/** 出版项里的年份：前面是逗号或冒号、后面跟着分隔符，如 ", 2021, 65"、"出版社, 2015."、", 2020: 1-5" */
+const PUB_YEAR_RE = /[,，:：]\s*((?:19|20)\d{2})[a-z]?\s*(?=[,，.．:：;；(（]|$)/g
+/** 著者-出版年制：年份紧跟在作者后面，如 "张三, 2020. 题名"、"LECUN Y. 2015a. Deep learning" */
+const AUTHOR_YEAR_HEAD_RE = /^([^[\]［］]{1,300}?)[,，.．]\s*((?:19|20)\d{2})([a-z])?[.．]\s*/
+
+/** 不是出版年的数字：DOI、网址、arXiv 编号、引用日期 [2024-01-01]、年份区间 1949—1978 */
+function stripNonPubNumbers(text: string): string {
+  return text
+    .replace(DOI_RE, ' ')
+    .replace(/https?:\/\/\S+/g, ' ')
+    .replace(/arXiv\s*[:：]?\s*\d{4}\.\d{4,5}(?:v\d+)?/gi, ' ')
+    .replace(/[[［]\d{4}-\d{1,2}-\d{1,2}[\]］]/g, ' ')
+    // 年份区间；"2019-06-01" 这样的日期不算
+    .replace(/(?<![\d-])(?:19|20)\d{2}\s*[-–—~～至]\s*(?:(?:19|20)\d{2}|\d{2})(?![\d-])/g, ' ')
+}
+
+/**
+ * 出版年。按顺序找：
+ * 1. 著者-出版年制，作者后面紧跟的年份
+ * 2. 文献类型标识 [J]、[M] 之后的出版项里，前有逗号或冒号的年份；没有就取出版项里的第一个年份
+ * 3. 没有类型标识：前有逗号或冒号的最后一个年份；没有就取最后一个年份
+ * 题名里的年份（"2008 crisis"、"1949—1978年"）、arXiv 编号都不会被当成出版年。
+ */
 function extractYear(text: string): number | null {
-  // 取第一个看起来像出版年的四位数（1900–2099），
-  // 但跳过 DOI 和 URL 里的数字
-  const cleaned = text.replace(DOI_RE, ' ').replace(/https?:\/\/\S+/g, ' ')
-  const years = [...cleaned.matchAll(/(?<!\d)(19\d{2}|20\d{2})(?!\d)/g)].map((m) => Number(m[1]))
-  return years.length > 0 ? years[0] : null
+  const head = text.match(AUTHOR_YEAR_HEAD_RE)
+  if (head && !/\d/.test(head[1])) return Number(head[2])
+  const type = text.match(TYPE_RE)
+  if (type) {
+    const pub = stripNonPubNumbers(text.slice(type.index! + type[0].length))
+    const marked = [...pub.matchAll(PUB_YEAR_RE)]
+    if (marked.length) return Number(marked[0][1])
+    const any = [...pub.matchAll(YEAR_RE)]
+    if (any.length) return Number(any[0][1])
+  }
+  const cleaned = stripNonPubNumbers(text)
+  const marked = [...cleaned.matchAll(PUB_YEAR_RE)]
+  if (marked.length) return Number(marked[marked.length - 1][1])
+  const any = [...cleaned.matchAll(YEAR_RE)]
+  return any.length ? Number(any[any.length - 1][1]) : null
 }
 
 /**
@@ -86,9 +121,10 @@ const DOT_PLACEHOLDER = '\u2024'
 function splitAuthorsAndTitle(text: string): { authors: string[]; title: string | null } {
   const typeMatch = text.match(TYPE_RE)
   // 题名在类型标识之前；没有类型标识时退化为第二段
-  const head = (typeMatch ? text.slice(0, typeMatch.index) : text).replace(ABBREV_RE, (m) =>
-    m.replaceAll('.', DOT_PLACEHOLDER),
-  )
+  const head = (typeMatch ? text.slice(0, typeMatch.index) : text)
+    .replace(ABBREV_RE, (m) => m.replaceAll('.', DOT_PLACEHOLDER))
+    // 著者-出版年制 "et al., 2017. 题名"：这个句点后面是逗号，不是作者和题名的分界
+    .replace(/\bet al\.(?=\s*[,，])/g, `et al${DOT_PLACEHOLDER}`)
   // GB/T 7714 的作者缩写不带句点（如 LECUN Y），所以第一个句点就是作者与题名的分界
   const parts = head.split(/[.．。](?!\d)\s*/).filter((p) => p.trim().length > 0)
 
@@ -98,12 +134,14 @@ function splitAuthorsAndTitle(text: string): { authors: string[]; title: string 
   }
 
   const restore = (p: string) => p.replaceAll(DOT_PLACEHOLDER, '.')
-  const authorSeg = restore(parts[0])
+  // 著者-出版年制："张三, 2020. 题名" 年份粘在作者段末尾；"张三. 2020a. 题名" 年份单独成段
+  const authorSeg = restore(parts[0]).replace(/[,，]\s*(?:19|20)\d{2}[a-z]?\s*$/, '')
+  if (parts.length > 2 && /^\s*(?:19|20)\d{2}[a-z]?\s*$/.test(parts[1])) parts.splice(1, 1)
   const title = restore(typeMatch ? parts.slice(1).join('. ').trim() : parts[1].trim())
   const authors = authorSeg
     .split(/[,，、;；]|\band\b/)
     .map((a) => a.trim())
-    .filter((a) => a.length > 0 && !/^(et al|等)$/i.test(a))
+    .filter((a) => a.length > 0 && !/^(et al\.?|等)$/i.test(a))
 
   return { authors, title: title.length > 0 ? title : null }
 }
