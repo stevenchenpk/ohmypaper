@@ -19,6 +19,7 @@ sources:
   - title: 四川大学本科毕业论文（设计）格式和参考文献著录要求（川大教〔2018〕143号附件5）
     url: https://zxx.scu.edu.cn/info/1106/1198.htm
     published: 2020-09-20
+    doc_number: 川大教〔2018〕143号附件5
     note: 哲学系官网转载全文。
   - title: 关于开展2026届本科毕业论文（设计）学术不端行为检测工作的通知
     url: https://jwc.scu.edu.cn/info/1069/10518.htm
@@ -77,3 +78,17 @@ ai_policy:
   forbidden: []
   disclosure: null
   penalty: 对于使用AI工具过程中出现的违规行为，按照《四川大学本科教育教学人工智能工具应用规范（试行）》（川大教〔2025〕28号）文件进行处理。
+
+provenance:
+  /references/standard:
+    source: 1
+    locator: 第 3 节"本科毕业论文（设计）参考文献的著录要求"，节末
+    quote: 参考文献的著录要求摘自 GB/T 3179-92
+    authority: secondary          # 学院转载的全文；教务处 2024-09-28 重挂的 PDF 附件未读到，无法确认 2024 版是否改动
+    effective: null               # 川大教〔2018〕143号，发文月份未查到
+    supersedes: null
+    verified_at: 2026-10-15
+    verified_by: claude
+    review: unreviewed
+    check: manual
+    check_note: 只对理工医各专业适用；文科类由各学院自定并报教务处备案。GB/T 3179 是期刊编排格式标准，不是 GB/T 7714，程序不按它逐条检查
