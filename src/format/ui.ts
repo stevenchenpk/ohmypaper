@@ -77,7 +77,7 @@ function renderCitationMap(map: CitationMap, verify: (VerifyLink | undefined)[])
     list.append(el('li', {}, el('span', { className: 'cmap-n mono' }, r.label), main, el('span', { className: 'cmap-v' }, v)))
   }
   d.append(list)
-  if (!verified && map.references.length) d.append(el('p', { className: 'note' }, '每条的核验结果显示在“未送核验”的位置：点下面的按钮把参考文献送去核验后，这里会标出结果。'))
+  if (!verified && map.references.length) d.append(el('p', { className: 'note' }, '每条的核验结果显示在“未送核验”的位置：点下面的按钮把参考文献填入引用核验，确认后开始核验，这里会标出结果。'))
   box.append(d)
   return box
 }
@@ -128,7 +128,7 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
   if (cmap) nodes.push(cmap)
 
   if (r.references.length) {
-    const btn = el('button', { type: 'button', className: 'btn' }, `把抽出的 ${r.references.length} 条参考文献送去核验真伪`)
+    const btn = el('button', { type: 'button', className: 'btn' }, `把抽出的 ${r.references.length} 条参考文献填入引用核验`)
     btn.addEventListener('click', () => onRefs(r.references))
     nodes.push(el('div', { className: 'actions' }, btn))
   }

@@ -4,6 +4,7 @@ import { type Dossier, emptyDossier } from './dossier/schema'
 import { createStore } from './dossier/store'
 import { type ResumeBar, mountResumeBar } from './dossier/ui'
 import { mountFormatCheck } from './format/ui'
+import { planHandoff, singleFlight } from './references/handoff'
 import { parseReferenceList } from './references/parse'
 import { STATUS_LABEL, STATUS_ORDER, toCsv, toTextReport } from './references/report'
 import { type VerifyResult, type VerifyStatus, verifyAll } from './references/verify'
@@ -132,7 +133,7 @@ function clearFormatRestored() {
   formatRestoredEl.replaceChildren()
 }
 
-async function run() {
+const run = singleFlight(async () => {
   const refs = parseReferenceList(input.value)
   if (refs.length === 0) {
     progress.textContent = '请先粘贴参考文献。'
@@ -159,7 +160,7 @@ async function run() {
     for (const r of results) byIndex[r.ref.index - 1] = r
     formatCheck.showVerify(fromFormat.refs, fromFormat.refs.map((_, i) => byIndex[i]))
   } else formatCheck.showVerify([], [])
-}
+})
 
 function download(name: string, content: string, type: string) {
   const url = URL.createObjectURL(new Blob([content], { type }))
@@ -194,11 +195,16 @@ $<HTMLButtonElement>('csv').addEventListener('click', () => {
 $<HTMLButtonElement>('print').addEventListener('click', () => window.print())
 
 const formatCheck = mountFormatCheck({
+  // 只填入核验框，不自动联网：用户看过列表、点"开始核验"才发送
   onReferences: (refs) => {
-    input.value = refs.map((r, i) => `[${i + 1}] ${r}`).join('\n')
+    const plan = planHandoff(input.value, refs)
+    if (plan.confirm && !confirm(plan.confirm)) return
+    input.value = plan.text
     fromFormat = { refs, text: input.value }
+    clearRestored()
     document.getElementById('verify')?.scrollIntoView({ behavior: 'smooth' })
-    void run()
+    progress.textContent = plan.note
+    input.focus({ preventScroll: true })
   },
   onStart: clearFormatRestored,
   onResult: (info) => void persist(withResume(dossier, { format: formatResume(info) })),
