@@ -132,3 +132,37 @@ describe('著者-出版年制对账', () => {
     expect(checkModel(model(['正文。'], refs), AY).issues.map((i) => i.id)).toContain('cite-none')
   })
 })
+
+describe('著者-出版年制对账表的文字', () => {
+  const refs = [
+    '张三. 2020a. 甲[J]. 某学报(1): 1-2.',
+    '张三. 2020b. 乙[J]. 某学报(2): 3-4.',
+    '李四, 王五. 2021. 丙[M]. 北京: 某出版社.',
+    'LECUN Y, BENGIO Y, HINTON G. 2015. Deep learning[J]. Nature, 521: 436-444.',
+  ]
+
+  it('每条一行：著者 + 年份作标签，被引次数，没引的和区分不出的分开写', async () => {
+    const { authorYearView } = await import('../src/format/citationView')
+    const map = checkModel(model(['研究（张三, 2020a）和（李四, 2019）。'], refs), AY).authorYearMap!
+    const v = authorYearView(map)
+    expect(v.summary).toBe('正文检测到 2 处"作者, 年份"式引用，对上参考文献 1 / 4 条')
+    expect(v.rows.map((r) => [r.label, r.cited])).toEqual([
+      ['张三 2020a', '引用 1 次'],
+      ['张三 2020b', '正文没有引用'],
+      ['李四 2021', '可能被引用，年份或 a、b 对不上，需人工确认'],
+      ['LECUN Y 2015', '正文没有引用'],
+    ])
+    expect(v.notes.join('')).toContain('"李四, 2019"（文献表是 2021）')
+  })
+
+  it('没识别出引用时每条都记"未检查"；核验有问题的列出正文引用位置', async () => {
+    const { authorYearView } = await import('../src/format/citationView')
+    const none = authorYearView(checkModel(model(['正文。'], refs), AY).authorYearMap!)
+    expect(none.rows.every((r) => r.cited === '未检查')).toBe(true)
+
+    const map = checkModel(model(['研究（张三, 2020a）。'], refs), AY).authorYearMap!
+    const v = authorYearView(map, [{ status: 'not_found', reason: '' }, { status: 'mismatch', reason: '' }])
+    expect(v.callouts[0]).toMatch(/^正文 「第一章 绪论」引用的 张三 2020a 核验为/)
+    expect(v.callouts[1]).toContain('正文中没有确定对上它的引用')
+  })
+})

@@ -89,13 +89,13 @@ function authorYearMap(doc: DocxModel, s: Structure): AuthorYearMap {
   const r = reconcileAuthorYear(doc, s)
   const at = (i: number) => locate(doc.paragraphs[i], s)
   return {
-    citations: r.citations.map((c) => ({ raw: c.raw, author: c.author, year: c.year, suffix: c.suffix, location: at(c.paragraph), narrative: c.narrative })),
+    citations: r.citations.map((c) => ({ raw: c.raw, author: c.author, year: c.year, suffix: c.suffix, location: at(c.paragraph), narrative: c.narrative, entry: c.entry })),
     references: r.entries.map((e, i) => ({
       author: e.author, year: e.year, suffix: e.suffix, text: referenceText(s.refEntries[i]), timesCited: e.timesCited,
       firstCited: e.firstCitation === null ? null : at(r.citations[e.firstCitation].paragraph),
     })),
     missing: r.missing, yearMismatch: r.yearMismatch, needSuffix: r.needSuffix, listSuffixMissing: r.listSuffixMissing,
-    uncited: r.uncited, unreadEntries: r.unreadEntries,
+    uncited: r.uncited, unreadEntries: r.unreadEntries, maybeCited: r.maybeCited,
     unresolved: r.unresolved.map((u) => ({ raw: u.raw, location: at(u.paragraph) })),
     noteRefs: r.noteRefs,
   }

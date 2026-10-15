@@ -81,7 +81,8 @@ export interface Report {
 }
 
 export interface AuthorYearMap {
-  citations: { raw: string; author: string | null; year: number; suffix: string | null; location: Location; narrative: boolean }[]
+  /** entry：对上的文献表条目（references 下标）；没对上或区分不出为 null */
+  citations: { raw: string; author: string | null; year: number; suffix: string | null; location: Location; narrative: boolean; entry: number | null }[]
   /** 与 Report.references 同序 */
   references: { author: string | null; year: number | null; suffix: string | null; text: string; timesCited: number; firstCited: Location | null }[]
   /** 以下都是 citations / references 的下标 */
@@ -91,6 +92,8 @@ export interface AuthorYearMap {
   listSuffixMissing: number[][]
   uncited: number[]
   unreadEntries: number[]
+  /** 可能被引用、但区分不出是哪篇的条目 */
+  maybeCited: number[]
   /** 像引用却认不出著者的写法；非空时"都被引用""都对得上"不能显示为通过 */
   unresolved: { raw: string; location: Location }[]
   noteRefs: number
