@@ -108,7 +108,7 @@ export function mountResumeBar(container: HTMLElement, opts: ResumeBarOptions): 
       { className: 'privacy' },
       h('b', {}, '仅存于此浏览器。'),
       store.persistent
-        ? '这些记录只保存在你当前这台设备的这个浏览器里，我们的服务器收不到；换浏览器、换设备或清除站点数据后就没有了，需要时请导出文件自行保管。只记参考文献文本、结果摘要，以及格式体检的文件名、学校和统计数字，不保存论文正文。'
+        ? '这些记录只保存在你当前这台设备的这个浏览器里，不会上传到任何地方（这个网页没有自己的后端服务器）；换浏览器、换设备或清除站点数据后就没有了，需要时请导出文件自行保管。只记参考文献文本、结果摘要，以及格式体检的文件名、学校和统计数字，不保存论文正文。'
         : '当前浏览器不允许保存数据（可能是隐私模式或禁用了站点数据），刷新页面后记录会丢失。你仍可以导出为文件自行保管。',
     )
     container.replaceChildren(h('h2', {}, '继续上次检查'), info, actions, notice, h('p', { className: 'resume-msg', hidden: message === '', textContent: message }))

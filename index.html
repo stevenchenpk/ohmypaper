@@ -34,7 +34,7 @@
         <h1>提交之前，<br />先给论文<br />做个<em>体检</em>。</h1>
         <aside class="hero-note">
           <p class="mono">论文提交前体检 · v0.1</p>
-          <p>查文献真伪、查格式规范、写 AI 使用声明。<b>不替你写，帮你明明白白地过关。</b></p>
+          <p>查文献真伪、查格式规范、写 AI 使用声明。<b>不替你写，帮你在提交前把问题找出来。</b></p>
           <p class="muted">免费 · 开源 MIT · 不降重 · 不代写</p>
         </aside>
       </section>
@@ -65,7 +65,7 @@
             <label class="btn file">选择 docx 文件<span class="tick-ico" aria-hidden="true"></span><input id="docx" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" /></label>
             <span id="format-progress" class="progress mono" aria-live="polite"></span>
           </div>
-          <p class="note">docx 只在你的浏览器里解析，正文不会发往任何服务器。.doc 和 WPS 格式请先另存为 docx。</p>
+          <p class="note">docx 只在你的浏览器里解析，论文正文不会被发送出去。.doc 和 WPS 格式请先另存为 docx。</p>
           <div id="format-restored" class="restored" hidden></div>
           <div id="format-results"></div>
           <p class="note">没有你的学校？<a href="https://github.com/stevenchenpk/ohmypaper/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">补充本校规则</a>，几分钟就能帮到下一届同学。</p>
@@ -78,7 +78,7 @@
           <h2>引用核验</h2>
           <p>粘贴参考文献，每条一行，带不带 [1] 序号都可以，支持 GB/T 7714 与 APA。我们逐条到
             <a href="https://www.crossref.org/" target="_blank" rel="noopener">Crossref</a> 和
-            <a href="https://openalex.org/" target="_blank" rel="noopener">OpenAlex</a> 两个公开学术库核对。</p>
+            <a href="https://openalex.org/" target="_blank" rel="noopener">OpenAlex</a> 等公开学术库核对。</p>
         </div>
         <div class="body">
           <label for="refs" class="sr-only">参考文献列表</label>
@@ -89,7 +89,7 @@
             <button id="sample" type="button" class="ghost">填入示例</button>
             <span id="progress" class="progress mono" aria-live="polite"></span>
           </div>
-          <p class="note">论文正文和研究数据默认只在浏览器里处理，联网核验只发送你确认过的参考文献信息。发往公开学术库的只有单条文献的标题或 DOI。</p>
+          <p class="note">论文正文和研究数据默认只在浏览器里处理，联网核验只发送你确认过的参考文献信息。核验时会把每条参考文献的文字（作者、题名、刊名等）或 DOI 发给 Crossref、OpenAlex、DataCite 和 doi.org 这几个公开学术服务，不发送论文正文。</p>
           <div id="restored" class="restored" hidden></div>
         </div>
       </section>
@@ -143,7 +143,7 @@
           </details>
           <details>
             <summary>我的论文会被发到别处吗？</summary>
-            <p>论文正文和研究数据默认只在浏览器里处理，联网核验只发送你确认过的参考文献信息。这个网页没有自己的后端服务器。格式体检完全在本机完成；你点“开始核验”后，我们才把参考文献逐条发给 Crossref 和 OpenAlex 查询。</p>
+            <p>论文正文和研究数据默认只在浏览器里处理，联网核验只发送你确认过的参考文献信息。这个网页没有自己的后端服务器。格式体检完全在本机完成，docx 不会被发送出去；你点“开始核验”后，浏览器才把每条参考文献的文字（作者、题名、刊名、卷期页码等）或 DOI 逐条发给 Crossref、OpenAlex、DataCite 和 doi.org 这几个公开学术服务查询，不发送论文正文。</p>
           </details>
           <details>
             <summary>为什么不做降重、降 AI 率？</summary>
