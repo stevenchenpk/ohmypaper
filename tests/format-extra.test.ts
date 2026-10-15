@@ -111,7 +111,7 @@ describe('无法判断的不能算通过', () => {
     expect(skipped(r)).toContain('页边距')
   })
 
-  it('部分节读不出时，读得出的记通过，读不出的另记未检查', () => {
+  it('部分节读不出时，整项记未检查，不算通过', () => {
     const m = base()
     const sec = m.sections[0]
     m.sections = [
@@ -120,8 +120,9 @@ describe('无法判断的不能算通过', () => {
     ]
     m.paragraphs.slice(1).forEach((p) => (p.sectionIndex = 1))
     const r = run(m)
-    expect(passed(r)).toContain('页边距')
+    expect(passed(r)).not.toContain('页边距')
     expect(r.skipped.find((s) => s.item === '页边距')?.reason).toContain('1 节')
+    expect(r.skipped.find((s) => s.item === '页边距')?.reason).toContain('没发现问题')
   })
 
   it('字体字号读不出的段落不算符合要求', () => {
@@ -225,5 +226,25 @@ describe('盲审匿名不打绿勾', () => {
     const r = checkModel(model([['正文。']]), null)
     expect(r.passed.map((p) => p.item)).toContain('文档属性中的作者信息')
     expect(r.skipped.map((p) => p.item)).not.toContain('盲审匿名')
+  })
+})
+
+describe('同一项不能既通过又未检查', () => {
+  it('skip 撤掉同名的 pass，之后的 pass 也不再记', async () => {
+    const { CheckContext } = await import('../src/format/checks/context')
+    const ctx = new CheckContext(model([['正文。']]), { headings: [], refHeading: null, refEntries: [] } as never, null)
+    ctx.pass('references', '无重复条目')
+    ctx.skip('references', '无重复条目', '有 1 条无法判断')
+    ctx.pass('references', '无重复条目')
+    expect(ctx.passed).toEqual([])
+    expect(ctx.skipped).toHaveLength(1)
+  })
+
+  it('bad.docx 不选学校：通过和未检查没有重名项', async () => {
+    const { readFileSync } = await import('node:fs')
+    const { checkDocx } = await import('../src/format/engine')
+    const r = checkDocx(new Uint8Array(readFileSync(new URL('./fixtures/bad.docx', import.meta.url))), null)
+    const skipped = new Set(r.skipped.map((s) => `${s.category}/${s.item}`))
+    expect(r.passed.filter((p) => skipped.has(`${p.category}/${p.item}`))).toEqual([])
   })
 })

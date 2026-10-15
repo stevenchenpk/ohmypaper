@@ -314,6 +314,6 @@ function checkDuplicates(ctx: CheckContext, entries: Paragraph[], numbers: (numb
       detail: `${pairs.slice(0, 3).join('，')}${pairs.length > 3 ? ' 等' : ''}的题名、第一作者和出版年相同，像是同一篇文献列了两次。如果确实是两篇，可以忽略。${unknown ? `另有 ${unknown} 条没拆出题名，没有比较。` : ''}`,
       basis,
     })
-  } else if (seen.length) ctx.pass('references', '无重复条目')
-  if (unknown) ctx.skip('references', '无重复条目', `${unknown} 条参考文献没拆出题名，无法判断是否和别的条目重复，需人工确认`)
+  } else if (unknown) ctx.skip('references', '无重复条目', `${unknown} 条参考文献没拆出题名，无法判断是否和别的条目重复，需人工确认`)
+  else if (seen.length) ctx.pass('references', '无重复条目')
 }

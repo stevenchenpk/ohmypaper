@@ -37,25 +37,31 @@ export class CheckContext {
     this.add({ ...issue, locations: paras.map((p) => locate(p, this.s)), total: paras.length })
   }
 
+  /** 同一项已记"未检查"时不再记通过：只判断了一部分的不能算通过 */
   pass(category: Category, item: string) {
+    if (this.skipped.some((n) => n.category === category && n.item === item)) return
+    if (this.passed.some((n) => n.category === category && n.item === item)) return
     this.passed.push({ category, item })
   }
 
+  /** 记"未检查"，并撤掉同一项已记的通过 */
   skip(category: Category, item: string, reason: string) {
+    const i = this.passed.findIndex((n) => n.category === category && n.item === item)
+    if (i >= 0) this.passed.splice(i, 1)
     this.skipped.push({ category, item, reason })
   }
 
   /**
    * 没发现问题时的收尾。无法判断的不能算通过：
-   * 全部无法判断 → 未检查；部分无法判断 → 判断得了的记通过，其余另记未检查。
+   * 全部判断得了 → 通过；只要有无法判断的 → 整项记未检查，说明已查的部分没发现问题。
    */
   settle(category: Category, item: string, checked: number, unknown: number, unit = '处') {
+    if (!unknown && checked > 0) return this.pass(category, item)
     if (checked === 0) {
       this.skip(category, item, unknown ? `${unknown} ${unit}无法从文件中读出，需人工确认` : '文档中没有可检查的内容')
       return
     }
-    this.pass(category, item)
-    if (unknown) this.skip(category, item, `另有 ${unknown} ${unit}无法从文件中读出，需人工确认`)
+    this.skip(category, item, `已读出的 ${checked} ${unit}没发现问题，另有 ${unknown} ${unit}无法从文件中读出，需人工确认`)
   }
 }
 
