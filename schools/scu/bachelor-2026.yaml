@@ -36,7 +36,7 @@ references:
   # 原文："参考文献的著录要求摘自 GB/T 3179-92"。GB/T 3179 是期刊编排格式标准，不是 GB/T 7714。
   standard: other
   # 原文只对理工医类规定"著录引文的参考文献采用顺序编码制"，文科由学院定，全校层面留空。
-  style: null
+  style: unknown       # 全校层面没有统一规定（只对理工医类写了顺序编码制）
   min_count: null      # 学校文件未规定；材料学院 2022 届通知要求 20 篇以上，属学院规定
   min_foreign: null
 

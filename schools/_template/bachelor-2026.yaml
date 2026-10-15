@@ -25,7 +25,7 @@ last_verified: 2026-10-11
 
 references:
   standard: GB/T 7714-2015  # 注意：GB/T 7714-2025 已于 2026-07-01 实施，以学校文件为准
-  style: numeric
+  style: numeric            # numeric 顺序编码制 / author-year 著者-出版年制 / either 两种都认 / unknown 查过没有规定；没查过留 null
   min_count: null
   min_foreign: null
 

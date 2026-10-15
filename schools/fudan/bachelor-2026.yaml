@@ -36,7 +36,7 @@ references:
   # 复旦图书馆《引注规范》写"遵照 GB/T 7714-2015"，但它是图书馆的写作指引，不是教务处对本科论文的规定，
   # 院系另有要求（如哲学学院只要求注明作者、书名等）。全校档案不据此填写。
   standard: null
-  style: null
+  style: unknown       # 全校文件没有规定引用体例，院系另有要求
   min_count: null
   min_foreign: null
 
