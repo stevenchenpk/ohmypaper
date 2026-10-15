@@ -134,6 +134,15 @@ describe('读不到的引用不能算通过', () => {
     expect(checkModel(oneCited, null).issues.find((i) => i.id === 'cite-uncited')?.severity).toBe('info')
   })
 
+  it('有脚注时乱序也只提示核对（检测到，请核对），不报问题', () => {
+    const doc = model([[['第一章 绪论'], H1], [['研究', ['[2]'], '和', ['[1]'], '。'], { noteRefs: 1 }], ...refs])
+    const issue = checkModel(doc, null).issues.find((i) => i.id === 'cite-order')!
+    expect(issue.severity).toBe('info')
+    expect(issue.detail).toContain('可能有引用没读到')
+    const sure = model([[['第一章 绪论'], H1], [['研究', ['[2]'], '和', ['[1]'], '。']], ...refs])
+    expect(checkModel(sure, null).issues.find((i) => i.id === 'cite-order')?.severity).toBe('warning')
+  })
+
   it('英文字母后的上标数字给不确定提示', () => {
     const doc = model([[['第一章 绪论'], H1], [['研究', ['[1]'], '和 deep learning', ['2'], '。']], ...refs])
     const report = checkModel(doc, null)

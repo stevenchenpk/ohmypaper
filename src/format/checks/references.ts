@@ -290,9 +290,10 @@ function checkCitations(ctx: CheckContext, basis: string) {
 
   if (r.outOfOrder.length) {
     const first = r.outOfOrder[0].number
+    // 有没读到的引用时，[n-1] 可能先在脚注或软件域里引过，乱序只作提示（和没被引用的处理一致）
     ctx.add({
-      id: 'cite-order', category: 'references', severity: 'warning', title: '参考文献编号没有按正文中首次引用的先后排列',
-      detail: `顺序编码制要求按文献在正文中第一次出现的顺序编号。例如 [${first}] 在 [${first - 1}] 之前就出现了。`,
+      id: 'cite-order', category: 'references', severity: unsure ? 'info' : 'warning', title: '参考文献编号没有按正文中首次引用的先后排列',
+      detail: `顺序编码制要求按文献在正文中第一次出现的顺序编号。例如 [${first}] 在 [${first - 1}] 之前就出现了。${unsure ? `可能有引用没读到：${unsure}。请核对实际的首次引用顺序。` : ''}`,
       locations: r.outOfOrder.map((o) => locate(at(o.citation), s)), basis,
     })
   } else if (unsure) ctx.skip('references', '引用顺序', `${unsure}，需人工确认`)
