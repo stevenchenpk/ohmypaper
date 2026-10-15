@@ -27,12 +27,23 @@ export interface SchoolProfile {
   degree: 'bachelor' | 'master' | 'doctor'
   cohort: number
   status: 'draft' | 'reviewed' | 'outdated'
-  sources: { title: string; url: string; published?: string | null; note?: string | null }[]
+  sources: {
+    title: string
+    url: string
+    published?: string | null
+    /** 文件版本，发布月份 YYYY-MM */
+    version?: string | null
+    doc_number?: string | null
+    archive_url?: string | null
+    sha256?: string | null
+    note?: string | null
+  }[]
   maintainers: string[]
   last_verified: string
   references?: {
     standard?: 'GB/T 7714-2015' | 'GB/T 7714-2025' | 'APA-7' | 'other' | null
-    style?: 'numeric' | 'author-year' | null
+    /** numeric 顺序编码制；author-year 著者-出版年制；either 两种都认；unknown 查过学校文件，没有规定 */
+    style?: 'numeric' | 'author-year' | 'either' | 'unknown' | null
     min_count?: number | null
     min_foreign?: number | null
   }
@@ -53,6 +64,48 @@ export interface SchoolProfile {
     page_numbering?: string | null
     blind_review?: string | null
   }
+  ai_policy?: Record<string, unknown> | null
+  scope?: ProfileScope | null
+  /** 逐条出处，键是字段路径（JSON Pointer），如 /format/margins_cm */
+  provenance?: Record<string, RuleProvenance> | null
+  conflicts?: RuleConflict[] | null
+}
+
+export interface ProfileScope {
+  cohorts?: number[] | null
+  /** null 表示全校 */
+  departments?: string[] | null
+  document_types?: string[] | null
+  excludes?: string[] | null
+}
+
+export type RuleAuthority =
+  | 'school_mandatory'
+  | 'school_template'
+  | 'department_notice'
+  | 'major_requirement'
+  | 'recommendation'
+  | 'secondary'
+
+export interface RuleProvenance {
+  source: number
+  locator?: string | null
+  quote?: string | null
+  authority: RuleAuthority
+  /** 依据文件的发布月份 YYYY-MM */
+  effective?: string | null
+  supersedes?: string | null
+  verified_at?: string | null
+  verified_by?: string | null
+  review: 'unreviewed' | 'reviewed' | 'disputed'
+  check: 'auto' | 'partial' | 'manual'
+  check_note?: string | null
+}
+
+export interface RuleConflict {
+  path: string
+  claims: { source: number; value: unknown; quote?: string | null }[]
+  note?: string | null
 }
 
 /** "1.5 倍" → multiple 1.5；"固定值 20 磅" → exact 20 */

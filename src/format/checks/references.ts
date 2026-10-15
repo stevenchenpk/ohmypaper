@@ -40,6 +40,18 @@ function editionLabel(mode: EditionMode): string {
   return `GB/T 7714—${mode}`
 }
 
+/**
+ * 只看档案和文献表序号时的体例判断（schema v2 的 either / unknown 也走这里）。
+ * 引擎实际用的是 citations.ts 的 inferCitationStyle，它还会看正文引用写法。
+ */
+export function citationStyleFor(
+  declared: NonNullable<SchoolProfile['references']>['style'] | undefined,
+  entriesNumbered: boolean,
+): { value: 'numeric' | 'author-year'; inferred: boolean } {
+  if (declared === 'numeric' || declared === 'author-year') return { value: declared, inferred: false }
+  return { value: entriesNumbered ? 'numeric' : 'author-year', inferred: true }
+}
+
 export function referenceText(p: Paragraph): string {
   return p.text.replace(MANUAL_NO, '').replace(DOTTED_NO, '').trim()
 }

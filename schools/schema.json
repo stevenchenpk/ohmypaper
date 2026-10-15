@@ -92,6 +92,37 @@
               "null"
             ],
             "description": "如：转载页面，非学校官网"
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "description": "文件版本，写到发布月份 YYYY-MM。学校一年内可能多次修订，只按届次记版本不够"
+          },
+          "doc_number": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "文号，如 校教〔2026〕5号"
+          },
+          "archive_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^https?://",
+            "description": "公共网页存档链接（如 Wayback）。原件不入库"
+          },
+          "sha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "附件文件的 SHA-256，用来判断学校有没有悄悄换文件"
           }
         }
       }
@@ -124,9 +155,11 @@
           "enum": [
             "numeric",
             "author-year",
+            "either",
+            "unknown",
             null
           ],
-          "description": "顺序编码制或著者-出版年制"
+          "description": "引用体例：numeric 顺序编码制；author-year 著者-出版年制；either 学校两种都认；unknown 查过学校文件，没有规定或找不到依据；null 还没查"
         },
         "min_count": {
           "type": [
@@ -332,6 +365,76 @@
           ]
         }
       }
+    },
+    "scope": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "description": "档案适用范围",
+      "properties": {
+        "cohorts": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "integer"
+          }
+        },
+        "departments": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "null 表示全校"
+        },
+        "document_types": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "excludes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "明确不适用的类别，如继续教育"
+        }
+      }
+    },
+    "provenance": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "逐条出处，以字段路径（JSON Pointer）为键，如 /format/margins_cm",
+      "propertyNames": {
+        "pattern": "^/(school|references|format|ai_policy)(/|$)"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/provenance"
+      }
+    },
+    "conflicts": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "$ref": "#/$defs/conflict"
+      }
     }
   },
   "$defs": {
@@ -491,6 +594,150 @@
             "null"
           ],
           "description": "这一级标题编号的写法示例，引擎据此识别编号格式。可选：第一章、第1章、一、、（一）、1、1.1、1.1.1、1.1.1.1"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "source",
+        "authority",
+        "review",
+        "check"
+      ],
+      "additionalProperties": false,
+      "description": "一条规则的出处与复核状态。没有出处记录的字段一律视为未复核",
+      "properties": {
+        "source": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "sources 数组的下标"
+        },
+        "locator": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "条款号、页码或小标题"
+        },
+        "quote": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200,
+          "description": "原文短引文"
+        },
+        "authority": {
+          "enum": [
+            "school_mandatory",
+            "school_template",
+            "department_notice",
+            "major_requirement",
+            "recommendation",
+            "secondary"
+          ],
+          "description": "依据的效力：学校强制文件、学校模板、学院通知、专业要求、建议、转述"
+        },
+        "effective": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+          "description": "所依据文件的发布月份 YYYY-MM"
+        },
+        "supersedes": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+          "description": "被替代的上一版的发布月份"
+        },
+        "verified_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "verified_by": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "复核人的 GitHub 用户名；未经人工复核写 claude"
+        },
+        "review": {
+          "enum": [
+            "unreviewed",
+            "reviewed",
+            "disputed"
+          ]
+        },
+        "check": {
+          "enum": [
+            "auto",
+            "partial",
+            "manual"
+          ],
+          "description": "程序能检查到什么程度"
+        },
+        "check_note": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "检查能力的边界"
+        }
+      }
+    },
+    "conflict": {
+      "type": "object",
+      "required": [
+        "path",
+        "claims"
+      ],
+      "additionalProperties": false,
+      "description": "不同来源说法不一致。并列记录，不替学校裁决",
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^/",
+          "description": "字段路径（JSON Pointer）"
+        },
+        "claims": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": [
+              "source",
+              "value"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "source": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "value": {},
+              "quote": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 200
+              }
+            }
+          }
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     }

@@ -14,6 +14,10 @@ sources:
   - title: 某某大学本科毕业论文（设计）撰写规范
     url: https://example.edu.cn/xxx.pdf
     published: 2025-10-01
+    version: 2025-10        # 文件版本，写到发布月份
+    doc_number: null        # 文号，如 校教〔2025〕12号
+    archive_url: null       # 公共网页存档链接（如 Wayback）；原件不入库
+    sha256: null            # 附件的 SHA-256，用来发现学校悄悄换了文件
     note: null
 
 maintainers: [your-github-name]
@@ -21,7 +25,7 @@ last_verified: 2026-10-11
 
 references:
   standard: null  # 学校文件写明版本才填 GB/T 7714-2015 或 GB/T 7714-2025；没写明就留空，引擎按过渡期两版都认
-  style: numeric
+  style: numeric  # numeric 顺序编码制 / author-year 著者-出版年制 / either 两种都认 / unknown 查过没有规定；没查过留 null
   min_count: null
   min_foreign: null
 
@@ -65,3 +69,37 @@ ai_policy:
   forbidden: []
   disclosure: null
   penalty: null
+
+# 适用范围。没写的项按全校、本届、毕业论文处理
+scope:
+  cohorts: [2026]
+  departments: null         # null 表示全校；只适用部分学院就列出学院名
+  document_types: [毕业论文, 毕业设计]
+  excludes: []              # 明确不适用的类别，如 继续教育
+
+# 逐条出处。键是字段路径；没有出处记录的字段一律按"未复核"处理，报告里不会说"符合学校要求"
+provenance: {}
+# 例：
+# provenance:
+#   /format/margins_cm:
+#     source: 0                    # sources 的下标
+#     locator: "1.2 页面设置"
+#     quote: "上、下、左边距 2.5cm，右边距 2.0cm"
+#     authority: school_mandatory  # school_mandatory / school_template / department_notice / major_requirement / recommendation / secondary
+#     effective: 2025-10           # 依据文件的发布月份
+#     supersedes: null             # 被替代的上一版，如 2024-11
+#     verified_at: 2026-10-11
+#     verified_by: your-github-name
+#     review: reviewed             # unreviewed / reviewed / disputed
+#     check: auto                  # auto / partial / manual
+#     check_note: null             # 程序检查不到的地方
+
+# 来源之间说法不一致时并列记录，不替学校裁决
+conflicts: []
+# 例：
+# conflicts:
+#   - path: /references/standard
+#     claims:
+#       - { source: 0, value: GB/T 7714-2015, quote: "……" }
+#       - { source: 1, value: GB/T 7714-2025, quote: "……" }
+#     note: 学院通知与全校规范不一致

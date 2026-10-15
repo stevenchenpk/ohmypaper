@@ -183,8 +183,9 @@ export function extractCitations(doc: DocxModel, s: Structure): Citation[] {
  * 档案没写体例时按文档判断：文献表全都没有序号、正文里"作者, 年份"式引用比方括号标号多，
  * 就当作著者-出版年制。
  */
-export function inferCitationStyle(doc: DocxModel, s: Structure, declared: 'numeric' | 'author-year' | null | undefined): { style: 'numeric' | 'author-year'; inferred: boolean } {
-  if (declared) return { style: declared, inferred: false }
+export function inferCitationStyle(doc: DocxModel, s: Structure, declared: string | null | undefined): { style: 'numeric' | 'author-year'; inferred: boolean } {
+  // 档案写明了才照办；either（两种都认）、unknown（查过没有依据）、null 都按文档实际判断
+  if (declared === 'numeric' || declared === 'author-year') return { style: declared, inferred: false }
   const entries = s.refEntries
   if (entries.length === 0 || entries.some((p, i) => entryNumber(p, i) !== null)) return { style: 'numeric', inferred: false }
   const paras = citingParagraphs(doc, s)
