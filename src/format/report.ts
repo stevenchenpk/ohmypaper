@@ -76,6 +76,24 @@ export interface Report {
   references: string[]
   /** 引用对账（顺序编码制）：正文标号与文献表的对应；著者-出版年制或没找到参考文献表时为 null */
   citationMap: CitationMap | null
+  /** 引用对账（著者-出版年制）；顺序编码制或没找到参考文献表时为 null */
+  authorYearMap: AuthorYearMap | null
+}
+
+export interface AuthorYearMap {
+  citations: { raw: string; author: string | null; year: number; suffix: string | null; location: Location; narrative: boolean }[]
+  /** 与 Report.references 同序 */
+  references: { author: string | null; year: number | null; suffix: string | null; text: string; timesCited: number; firstCited: Location | null }[]
+  /** 以下都是 citations / references 的下标 */
+  missing: number[]
+  yearMismatch: { citation: number; listed: string[] }[]
+  needSuffix: number[]
+  listSuffixMissing: number[][]
+  uncited: number[]
+  unreadEntries: number[]
+  /** 像引用却认不出著者的写法；非空时"都被引用""都对得上"不能显示为通过 */
+  unresolved: { raw: string; location: Location }[]
+  noteRefs: number
 }
 
 export interface CitationLink {

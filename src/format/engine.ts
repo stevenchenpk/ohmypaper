@@ -6,7 +6,8 @@
 import { type DocxModel, parseDocx } from './docx'
 import type { SchoolProfile } from './profile'
 import { profileLabel } from './profile'
-import type { CitationMap, Report, Severity } from './report'
+import type { AuthorYearMap, CitationMap, Report, Severity } from './report'
+import { reconcileAuthorYear } from './authorYear'
 import { inferCitationStyle, reconcileCitations } from './citations'
 import { CheckContext } from './checks/context'
 import { checkCaptions } from './checks/captions'
@@ -59,6 +60,9 @@ export function checkModel(doc: DocxModel, profile: SchoolProfile | null): Repor
   checkReferences(ctx)
   checkCleanup(ctx)
 
+  // 引用对账按体例分两种；没找到参考文献表时不做
+  const citeStyle = s.refHeading === null ? null : inferCitationStyle(doc, s, profile?.references?.style).style
+
   const rank: Record<Severity, number> = { error: 0, warning: 1, info: 2 }
   const issues = [...ctx.issues].sort((a, b) => rank[a.severity] - rank[b.severity])
 
@@ -75,10 +79,25 @@ export function checkModel(doc: DocxModel, profile: SchoolProfile | null): Repor
       references: s.refEntries.length,
     },
     references: s.refEntries.map(referenceText),
-    // 只对顺序编码制做对账；对账和著录标准无关，学校要求的不是 GB/T 7714 时也照常做
-    citationMap: inferCitationStyle(doc, s, profile?.references?.style).style === 'numeric' && s.refHeading !== null
-      ? citationMap(doc, s)
-      : null,
+    // 对账和著录标准无关，学校要求的不是 GB/T 7714 时也照常做
+    citationMap: citeStyle === 'numeric' ? citationMap(doc, s) : null,
+    authorYearMap: citeStyle === 'author-year' ? authorYearMap(doc, s) : null,
+  }
+}
+
+function authorYearMap(doc: DocxModel, s: Structure): AuthorYearMap {
+  const r = reconcileAuthorYear(doc, s)
+  const at = (i: number) => locate(doc.paragraphs[i], s)
+  return {
+    citations: r.citations.map((c) => ({ raw: c.raw, author: c.author, year: c.year, suffix: c.suffix, location: at(c.paragraph), narrative: c.narrative })),
+    references: r.entries.map((e, i) => ({
+      author: e.author, year: e.year, suffix: e.suffix, text: referenceText(s.refEntries[i]), timesCited: e.timesCited,
+      firstCited: e.firstCitation === null ? null : at(r.citations[e.firstCitation].paragraph),
+    })),
+    missing: r.missing, yearMismatch: r.yearMismatch, needSuffix: r.needSuffix, listSuffixMissing: r.listSuffixMissing,
+    uncited: r.uncited, unreadEntries: r.unreadEntries,
+    unresolved: r.unresolved.map((u) => ({ raw: u.raw, location: at(u.paragraph) })),
+    noteRefs: r.noteRefs,
   }
 }
 

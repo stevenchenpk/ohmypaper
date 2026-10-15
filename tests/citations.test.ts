@@ -173,13 +173,14 @@ describe('档案没写引用体例时识别著者-出版年制', () => {
     [['李四. 2023. 乙[J]. 某学报(1): 1-2.']],
   ])
 
-  it('不报没有序号、没有引用标注，对账记"不适用"', () => {
+  it('不报没有序号、没有引用标注，改按著者和年份对账', () => {
     const r = checkModel(doc, null)
     const ids = r.issues.map((i) => i.id)
     expect(ids).not.toContain('refs-unnumbered')
     expect(ids).not.toContain('cite-none')
-    expect(r.skipped.find((x) => x.item === '正文引用与文献表对账')?.reason).toContain('顺序编码制对账不适用')
+    expect(r.skipped.find((x) => x.item === '参考文献序号')?.reason).toContain('按著者-出版年制处理')
     expect(r.citationMap).toBeNull()
+    expect(r.authorYearMap?.references.map((x) => x.timesCited)).toEqual([1, 1])
   })
 
   it('文献表没有序号、正文也没有作者年份引用时，仍按顺序编码制报没有序号', () => {

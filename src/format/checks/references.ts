@@ -10,6 +10,7 @@ import { parseGbt7714 } from '../../references/structured'
 import { yearOf } from '../../references/structured/types'
 import { type Edition, RULES, analyzeEntry, checkEntry } from '../../references/style/gbt7714'
 import type { SchoolProfile } from '../profile'
+import { reconcileAuthorYear } from '../authorYear'
 import { type CitationReconciliation, entryNumber, inferCitationStyle, reconcileCitations } from '../citations'
 import { locate, norm, shownText } from '../structure'
 import { type CheckContext, unknownNote } from './context'
@@ -65,11 +66,9 @@ export function checkReferences(ctx: CheckContext) {
   // 学校要求的不是 GB/T 7714：著录格式不查，但正文引用与文献表的对账和著录标准无关，照常做
   const nonGbt = nonGbtNote(profile)
   const basis = nonGbt ? ctx.schoolBasis || '顺序编码制' : editionLabel(mode)
-  // 档案没写体例时按文档判断；判断为著者-出版年制的，不按顺序编码制查序号和对账
+  // 档案没写体例时按文档判断；判断为著者-出版年制的，不按顺序编码制查序号，改按著者和年份对账
   const { style, inferred } = inferCitationStyle(ctx.doc, s, refRule?.style)
-  const AUTHOR_YEAR_NOTE = inferred
-    ? '学校档案没写引用体例；文献表没有序号、正文是"作者, 年份"的写法，按著者-出版年制处理，顺序编码制对账不适用'
-    : '著者-出版年制不检查引用顺序'
+  const AUTHOR_YEAR_NOTE = inferred ? '学校档案没写引用体例；文献表没有序号、正文是"作者, 年份"的写法，按著者-出版年制处理，不查序号' : ''
 
   if (nonGbt) ctx.skip('references', '参考文献著录格式', nonGbt)
   if (s.refHeading === null) {
@@ -116,7 +115,10 @@ export function checkReferences(ctx: CheckContext) {
   if (entryRule) checkTextStyle(ctx, { category: 'references', label: '参考文献条目', id: 'refs-style', paragraphs: entries, rule: entryRule })
 
   if (style === 'numeric') checkCitations(ctx, basis)
-  else ctx.skip('references', '正文引用与文献表对账', AUTHOR_YEAR_NOTE)
+  else {
+    const ayBasis = nonGbt ? ctx.schoolBasis || '著者-出版年制' : basis
+    checkAuthorYear(ctx, inferred ? `${ayBasis}（学校档案没写引用体例，按正文写法判断为著者-出版年制）` : ayBasis)
+  }
 }
 
 /**
@@ -137,8 +139,9 @@ function checkGbtEntries(
   AUTHOR_YEAR_NOTE: string, mode: EditionMode, edition: Edition, basis: string,
 ) {
   // 序号
-  if (style !== 'numeric') ctx.skip('references', '参考文献序号', AUTHOR_YEAR_NOTE)
-  else {
+  if (style !== 'numeric') {
+    if (AUTHOR_YEAR_NOTE) ctx.skip('references', '参考文献序号', AUTHOR_YEAR_NOTE)
+  } else {
     const dotted = entries.filter((p) => !MANUAL_NO.test(shownText(p)) && DOTTED_NO.test(shownText(p)))
     const missing = entries.filter((p, i) => numbers[i] === null && !dotted.includes(p))
     if (dotted.length) {
@@ -222,6 +225,71 @@ function checkGbtEntries(
   }
 
   checkDuplicates(ctx, entries, numbers, basis)
+}
+
+/** 著者-出版年制对账：拿不准的（认不出著者、读不出文献表条目、有脚注）一律不判通过 */
+function checkAuthorYear(ctx: CheckContext, basis: string) {
+  const { doc, s } = ctx
+  const r = reconcileAuthorYear(doc, s)
+  const at = (ci: number) => locate(doc.paragraphs[r.citations[ci].paragraph], s)
+  const parts: string[] = []
+  if (r.unresolved.length) parts.push(`${r.unresolved.length} 处像引用的写法认不出著者，如"${r.unresolved[0].raw}"`)
+  if (r.unreadEntries.length) parts.push(`文献表里有 ${r.unreadEntries.length} 条读不出第一著者或出版年`)
+  if (r.noteRefs) parts.push(`正文里有 ${r.noteRefs} 个脚注或尾注，脚注里的引用读不到`)
+  const unsure = parts.join('；')
+
+  if (r.citations.length === 0) {
+    if (unsure) ctx.skip('references', '正文引用与文献表对账', `没有读到"作者, 年份"式的引用，${unsure}，需人工核对`)
+    else {
+      ctx.add({
+        id: 'cite-none', category: 'references', severity: 'info', title: '正文中没有找到"（作者, 年份）"这样的引用',
+        detail: '著者-出版年制的引用写作"（张三, 2020）"或"张三（2020）"。如果引用放在脚注里，检查识别不到。', basis,
+      })
+    }
+    return
+  }
+
+  if (r.missing.length) {
+    ctx.add({
+      id: 'cite-ay-missing', category: 'references', severity: 'error', title: `${r.missing.length} 处引用在参考文献表里找不到这位著者`,
+      detail: `如"${r.citations[r.missing[0]].raw}"。`, locations: r.missing.map(at), basis,
+    })
+  }
+  if (r.yearMismatch.length) {
+    const m = r.yearMismatch[0]
+    ctx.add({
+      id: 'cite-ay-year', category: 'references', severity: 'warning', title: `${r.yearMismatch.length} 处引用的年份和参考文献表对不上`,
+      detail: `如"${r.citations[m.citation].raw}"，文献表里这位著者的出版年是 ${m.listed.join('、')}。`,
+      locations: r.yearMismatch.map((x) => at(x.citation)), basis,
+    })
+  }
+  if (r.needSuffix.length) {
+    ctx.add({
+      id: 'cite-ay-suffix', category: 'references', severity: 'warning', title: `${r.needSuffix.length} 处引用区分不出是同一著者同年的哪一篇`,
+      detail: `如"${r.citations[r.needSuffix[0]].raw}"。同一著者同年出版的多篇文献，出版年后要加 a、b、c 区分，正文和文献表一致。`,
+      locations: r.needSuffix.map(at), basis,
+    })
+  }
+  if (r.listSuffixMissing.length) {
+    const paras = r.listSuffixMissing.flat().map((i) => s.refEntries[i])
+    ctx.addForParagraphs(paras, {
+      id: 'refs-ay-suffix', category: 'references', severity: 'warning', title: '参考文献表中同一著者同年的多篇文献没有用 a、b 区分',
+      detail: '例如两篇都写"2020"，应写成"2020a""2020b"，正文引用也随之区分。', basis,
+    })
+  }
+  if (!r.missing.length && !r.yearMismatch.length && !r.needSuffix.length) {
+    if (r.unresolved.length) ctx.skip('references', '引用与文献表对应', `${r.unresolved.length} 处像引用的写法认不出著者，如"${r.unresolved[0].raw}"，需人工确认`)
+    else ctx.pass('references', '引用与文献表对应')
+  }
+
+  if (r.uncited.length) {
+    ctx.addForParagraphs(r.uncited.map((i) => s.refEntries[i]), {
+      id: 'cite-uncited', category: 'references', severity: unsure ? 'info' : 'warning', title: `${r.uncited.length} 条参考文献在正文中没有找到引用`,
+      detail: unsure ? `可能有引用没读到：${unsure}。请核对这几条是否确实被引用。` : '列入参考文献的每一条都应在正文中引用。',
+      basis,
+    })
+  } else if (unsure) ctx.skip('references', '每条文献都被引用', `${unsure}，需人工确认`)
+  else ctx.pass('references', '每条文献都被引用')
 }
 
 /** 可能漏读引用的原因；空串表示没有 */
