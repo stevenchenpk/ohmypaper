@@ -21,9 +21,13 @@ const SEVERITY_TEXT: Record<Severity, string> = {
   info: '检测到，请核对',
 }
 
-/** 没选学校时没有"所选规则"，只有通用要求（国标和排版惯例） */
-export function severityLabel(s: Severity, hasProfile: boolean): string {
-  return s === 'error' && !hasProfile ? '与通用要求不符' : SEVERITY_TEXT[s]
+/**
+ * 没选学校时没有"所选规则"，只有通用要求（国标和排版惯例）。
+ * 提交前清理项（修订、批注、失效的交叉引用）不是在比对哪条要求，不说"不符"。
+ */
+export function severityLabel(s: Severity, hasProfile: boolean, category?: Category): string {
+  if (s !== 'error' || hasProfile) return SEVERITY_TEXT[s]
+  return category === 'cleanup' ? '检测到问题' : '与通用要求不符'
 }
 
 export interface Location {

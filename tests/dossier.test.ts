@@ -225,6 +225,12 @@ describe('继续上次检查', () => {
     expect(t).toContain('当时通过 10')
   })
 
+  it('检测到的两档合并计数，和结果区口径一致', () => {
+    const t = formatCountsText(formatResume({ filename: 'a.docx', schoolPath: null, schoolLabel: null, counts: { error: 0, warning: 7, info: 2, passed: 5, skipped: 3 } }, NOW))
+    expect(t).toContain('检测到，请核对 9')
+    expect(t).not.toMatch(/建议确认|提示/)
+  })
+
   it('有未检查项时，摘要里一定写出未检查数量', () => {
     const t = formatCountsText(formatResume({ filename: 'a.docx', schoolPath: null, schoolLabel: null, counts: { error: 0, warning: 0, info: 0, passed: 5, skipped: 7 } }, NOW))
     expect(t).toContain('未检查，需人工确认 7')

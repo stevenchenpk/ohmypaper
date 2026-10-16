@@ -162,6 +162,9 @@ describe('结果措辞', () => {
     expect(severityLabel('error', false)).toBe('与通用要求不符')
     expect(severityLabel('error', true)).toBe('与所选规则不符')
     expect(severityLabel('warning', false)).toBe('检测到问题')
+    // 没选学校时，提交前清理项不说"不符"
+    expect(severityLabel('error', false, 'cleanup')).toBe('检测到问题')
+    expect(severityLabel('error', true, 'cleanup')).toBe('与所选规则不符')
   })
 })
 

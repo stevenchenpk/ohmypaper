@@ -64,8 +64,8 @@ export function formatCountsText(f: FormatResume): string {
   const n = f.counts
   const parts: string[] = []
   if (n.error) parts.push(`需修改 ${n.error}`)
-  if (n.warning) parts.push(`建议确认 ${n.warning}`)
-  if (n.info) parts.push(`提示 ${n.info}`)
+  // 和格式体检结果区的口径一致：warning、info 合并为"检测到，请核对"
+  if (n.warning + n.info) parts.push(`检测到，请核对 ${n.warning + n.info}`)
   parts.push(`未检查，需人工确认 ${n.skipped}`)
   parts.push(`当时通过 ${n.passed}`)
   return parts.join(' · ')

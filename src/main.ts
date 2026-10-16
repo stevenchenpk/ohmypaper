@@ -15,13 +15,13 @@ const SAMPLE = `[1] LECUN Y, BENGIO Y, HINTON G. Deep learning[J]. Nature, 2015,
 [4] SMITH J. Neural correlates of thesis anxiety in undergraduate cohorts[J]. Journal of Imaginary Studies, 2023, 12(3): 45-67.
 [5] 张三, 李四. 生成式人工智能对高等教育的影响研究[J]. 中国高教研究, 2024(3): 12-19.`
 
-/** 三档结果：查无或不符 / 未检查（含查询失败，绝不算通过）/ 检测到一致记录 */
+/** 三档结果：查无或不符 / 未检查（含查询失败，绝不算通过）/ 已核实（检测到一致记录） */
 type Tier = 'bad' | 'open' | 'ok'
 const TIER_OF: Record<VerifyStatus, Tier> = { not_found: 'bad', mismatch: 'bad', manual: 'open', error: 'open', verified: 'ok' }
 const TIERS: { tier: Tier; label: string; note: (n: Map<VerifyStatus, number>) => string }[] = [
   { tier: 'bad', label: '查无此文或信息不符', note: (n) => `查无此文 ${n.get('not_found') ?? 0} · 信息不符 ${n.get('mismatch') ?? 0}` },
   { tier: 'open', label: '未检查，需人工确认', note: (n) => (n.get('error') ? `需人工核对 ${n.get('manual') ?? 0} · 查询失败 ${n.get('error')}，不算通过` : '没有开放接口或查不到，不算通过') },
-  { tier: 'ok', label: '检测到一致记录', note: () => '每条写明核对了哪几项' },
+  { tier: 'ok', label: '已核实', note: () => '检测到一致记录，每条写明核对了哪几项' },
 ]
 const TIER_TEXT: Record<Tier, string> = { bad: '需要处理', open: '未检查', ok: '检测到' }
 
@@ -77,7 +77,7 @@ function renderReport(results: VerifyResult[], at: Date) {
       el('div', { className: 'd' }, note(counts)),
     )))
 
-  $('report-count').replaceChildren(String(results.length), el('small', {}, '条'))
+  $('report-count').replaceChildren(String(results.length), el('small', {}, '条文献'))
   $('report-meta').textContent = `${at.toLocaleString('zh-CN', { hour12: false })} · Crossref · OpenAlex`
   $('report-total').textContent = `共 ${results.length} 条`
 

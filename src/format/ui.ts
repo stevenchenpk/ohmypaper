@@ -45,7 +45,7 @@ function renderIssue(i: Issue, hasProfile: boolean): HTMLElement {
   }
   body.append(el('p', { className: 'match' }, `依据：${i.basis}`))
   return el('article', { className: `row sev-${i.severity}` },
-    el('div', { className: 'row-side' }, el('span', { className: `st sev-${i.severity}` }, severityLabel(i.severity, hasProfile))),
+    el('div', { className: 'row-side' }, el('span', { className: `st sev-${i.severity}` }, severityLabel(i.severity, hasProfile, i.category))),
     body,
   )
 }

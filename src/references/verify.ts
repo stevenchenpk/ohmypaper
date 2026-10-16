@@ -352,7 +352,7 @@ async function verifyBySearch(ref: ParsedReference, opts: SourceOptions): Promis
   const s = await search(ref, opts)
   if (s.allFailed) return result(ref, 'error', '两个学术库都暂时无法访问，请稍后重试。')
   if (!s.top || s.top.sim < THRESHOLDS.related) {
-    return notFound(ref, s, '在 Crossref 和 OpenAlex 中都找不到相近的记录。请确认这篇文献真实存在。')
+    return notFound(ref, s, '在 Crossref 和 OpenAlex 中都找不到相近的记录。只查了这两个开放库，查不到不等于不存在，请找到原文确认。')
   }
   return judge(ref, s.top)
 }
