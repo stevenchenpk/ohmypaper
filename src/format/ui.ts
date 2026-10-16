@@ -91,17 +91,26 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
   for (const i of r.issues) counts[i.severity]++
 
   const hasProfile = r.profileLabel !== null
-  const cell = (cls: string, label: string, n: number, note: string) =>
-    el('div', { className: `t ${cls}` }, el('div', { className: 'k' }, label), el('div', { className: 'v' }, String(n)), el('div', { className: 'd' }, note))
-  // 四格并排：不符、检测到、未检查、通过。未检查和通过同样醒目
-  const summary = el('div', {},
+  const cell = (cls: string, label: string, n: number, note: string, href: string) =>
+    el('a', { className: `t ${cls}`, href }, el('div', { className: 'k' }, label), el('div', { className: 'v' }, String(n)), el('div', { className: 'd' }, note))
+  const warnN = counts.warning + counts.info
+  const bySchool = hasProfile ? 0 : r.skipped.filter((p) => (p.reason ?? '').includes('学校档案未规定')).length
+  // 首屏总账：四类分栏，不加总。"要你自己查"排第二、和"要改"同样醒目；通过排最后、字号降一级
+  const verdict = [
+    counts.error ? `${counts.error} 处要改` : '没有必须改的',
+    warnN ? `${warnN} 处请核对` : '',
+    r.skipped.length ? `另有 ${r.skipped.length} 项工具没查，需要你对照规范自己查` : '',
+  ].filter(Boolean).join('，')
+  const summary = el('div', { className: 'ledger' },
     el('p', { className: 'scope mono' }, r.profileLabel ? `按 ${r.profileLabel} 的要求检查` : '通用检查（未选学校）'),
-    el('div', { className: 'tally four' },
-      cell('t-bad', severityLabel('error', hasProfile), counts.error, '需要修改'),
-      cell('t-warn', '检测到，请核对', counts.warning + counts.info, '可能有问题，请对照规范看'),
-      cell('t-open', '未检查，需人工确认', r.skipped.length, '工具没有判断，不算通过'),
-      cell('t-ok', '通过', r.passed.length, '能自动检查的项'),
+    el('p', { className: 'verdict' }, `${verdict}。`),
+    el('div', { className: 'tally four ledger-cells' },
+      cell('t-bad', severityLabel('error', hasProfile), counts.error, '需要修改', '#fmt-issues'),
+      cell('t-open', '未检查，需人工确认', r.skipped.length, '要你自己查，不算通过', '#fmt-skipped'),
+      cell('t-warn', '检测到，请核对', warnN, '可能有问题，请对照规范看', '#fmt-issues'),
+      cell('t-ok t-minor', '通过', r.passed.length, '能自动检查的项', '#fmt-passed'),
     ),
+    bySchool ? el('p', { className: 'note hint' }, `其中 ${bySchool} 项是因为没选学校才没查。选择学校后，这些项可以自动检查。`) : el('span', {}),
   )
   const nodes: Node[] = [summary]
   if (r.issues.length === 0) nodes.push(el('p', { className: 'note' }, '没有检测到问题。工具只能判断能自动检查的项，提交前仍请对照学校规范通读一遍。'))
@@ -110,6 +119,7 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
   for (const c of cats) {
     const list = r.issues.filter((i) => i.category === c)
     if (list.length === 0) continue
+    if (!nodes.some((n) => n instanceof HTMLElement && n.id === 'fmt-issues')) nodes.push(el('span', { id: 'fmt-issues' }))
     nodes.push(el('h3', { className: 'cat' }, `${CATEGORY_LABEL[c]}（${list.length}）`), el('div', { className: 'rows' }, ...list.map((i) => renderIssue(i, hasProfile))))
   }
 
@@ -121,12 +131,15 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
   // 未检查的项和问题一样重要，直接展开；通过的项折叠
   if (r.skipped.length) {
     nodes.push(
-      el('h3', { className: 'cat' }, `未检查，需人工确认（${r.skipped.length}）`),
-      el('p', { className: 'note' }, '下面这些项工具没有判断，不代表符合要求，请对照学校规范自己看一遍。'),
-      el('ul', { className: 'skipped' }, ...r.skipped.map((p) => el('li', {}, `${CATEGORY_LABEL[p.category]} · ${p.item}：${p.reason}`))),
+      el('h3', { className: 'cat todo', id: 'fmt-skipped' }, `你要自己查的 ${r.skipped.length} 项（未检查，需人工确认）`),
+      el('p', { className: 'note' }, '工具没有判断这些项，不代表符合要求。请对照学校规范逐条查，查完在左边打勾（勾选只留在这个页面，不会保存）。'),
+      el('ul', { className: 'skipped todo-list' }, ...r.skipped.map((p) => { const cb = document.createElement('input'); cb.type = 'checkbox'; return el('li', {}, el('label', {}, cb, ` ${CATEGORY_LABEL[p.category]} · ${p.item}：${p.reason}`)) })),
     )
+    const copyBtn = el('button', { type: 'button', className: 'link' }, '复制这份自查清单')
+    copyBtn.addEventListener('click', () => void navigator.clipboard?.writeText(r.skipped.map((p, k) => `${k + 1}. ${CATEGORY_LABEL[p.category]} · ${p.item}：${p.reason}`).join('\n')))
+    nodes.push(el('div', { className: 'actions' }, copyBtn))
   }
-  if (r.passed.length) nodes.push(details(`通过的 ${r.passed.length} 项`, r.passed.map((p) => `${CATEGORY_LABEL[p.category]} · ${p.item}`)))
+  if (r.passed.length) nodes.push(el('span', { id: 'fmt-passed' }), details(`通过的 ${r.passed.length} 项`, r.passed.map((p) => `${CATEGORY_LABEL[p.category]} · ${p.item}`)))
 
   const cmap = renderCitationMap(r, [])
   if (cmap) nodes.push(cmap)

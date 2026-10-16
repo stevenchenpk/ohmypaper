@@ -175,6 +175,14 @@ label.file:focus-within { outline: 2px solid var(--tick); outline-offset: 3px; }
 .tally .v { font: 400 128px/.85 var(--disp); letter-spacing: -.02em; margin-top: 18px; font-synthesis: none; }
 .tally .four .v, .tally.four .v { font-size: 104px; }
 .tally .d { font-size: 13px; color: var(--mute); margin-top: 14px; }
+.ledger .verdict { font: 700 22px/1.45 var(--sans); margin: 6px 0 18px; max-width: 34em; }
+.ledger-cells > a.t { color: inherit; text-decoration: none; }
+.ledger-cells > a.t:hover .d { color: var(--ink); text-decoration: underline; }
+.ledger-cells > .t-open { background: var(--open-bg); padding-left: 20px; }
+.ledger-cells > .t-minor .v { font-size: 64px; margin-top: 30px; }
+.ledger .hint { margin-top: 10px; color: var(--open); }
+h3.cat.todo { color: var(--open); }
+.todo-list li label { cursor: pointer; }
 .t-bad .k, .t-bad .v { color: var(--bad); }
 .t-bad .k::before { background: var(--bad); }
 .t-warn .k, .t-warn .v { color: var(--warn); }
@@ -352,3 +360,6 @@ ol.cmap-rows.wide .cmap-n { white-space: normal; word-break: break-word; }
   .sec { padding-top: 0; }
   .row { break-inside: avoid; }
 }
+ul.skipped.todo-list li { padding-left: 0; }
+ul.skipped.todo-list li::before { display: none; }
+.todo-list input[type=checkbox] { accent-color: var(--open); width: 16px; height: 16px; margin: 0 8px 0 0; vertical-align: -3px; }
