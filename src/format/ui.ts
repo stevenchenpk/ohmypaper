@@ -136,7 +136,14 @@ function renderReport(r: Report, out: HTMLElement, onRefs: (refs: string[]) => v
       el('ul', { className: 'skipped todo-list' }, ...r.skipped.map((p) => { const cb = document.createElement('input'); cb.type = 'checkbox'; return el('li', {}, el('label', {}, cb, ` ${CATEGORY_LABEL[p.category]} · ${p.item}：${p.reason}`)) })),
     )
     const copyBtn = el('button', { type: 'button', className: 'link' }, '复制这份自查清单')
-    copyBtn.addEventListener('click', () => void navigator.clipboard?.writeText(r.skipped.map((p, k) => `${k + 1}. ${CATEGORY_LABEL[p.category]} · ${p.item}：${p.reason}`).join('\n')))
+    // 和导出报告一样写明：未检查不算通过
+    const todoText = [`你要自己查的 ${r.skipped.length} 项（未检查，需人工确认，不算通过）`, ...r.skipped.map((p, k) => `${k + 1}. ${CATEGORY_LABEL[p.category]} · ${p.item}：${p.reason}`)].join('\n')
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard?.writeText(todoText).then(
+        () => { copyBtn.textContent = '已复制' },
+        () => { copyBtn.textContent = '复制失败，请手动选中复制' },
+      )
+    })
     nodes.push(el('div', { className: 'actions' }, copyBtn))
   }
   if (r.passed.length) nodes.push(el('span', { id: 'fmt-passed' }), details(`通过的 ${r.passed.length} 项`, r.passed.map((p) => `${CATEGORY_LABEL[p.category]} · ${p.item}`)))

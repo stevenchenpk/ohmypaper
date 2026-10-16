@@ -175,7 +175,8 @@ label.file:focus-within { outline: 2px solid var(--tick); outline-offset: 3px; }
 .tally .v { font: 400 128px/.85 var(--disp); letter-spacing: -.02em; margin-top: 18px; font-synthesis: none; }
 .tally .four .v, .tally.four .v { font-size: 104px; }
 .tally .d { font-size: 13px; color: var(--mute); margin-top: 14px; }
-.ledger .verdict { font: 700 22px/1.45 var(--sans); margin: 6px 0 18px; max-width: 34em; }
+.ledger .verdict { font: 700 22px/1.45 var(--sans); margin: 6px 0 18px; max-width: 34em; text-wrap: pretty; }
+@media (max-width: 560px) { .ledger .verdict { font-size: 19px; } }
 .ledger-cells > a.t { color: inherit; text-decoration: none; }
 .ledger-cells > a.t:hover .d { color: var(--ink); text-decoration: underline; }
 .ledger-cells > .t-open { background: var(--open-bg); padding-left: 20px; }
