@@ -143,7 +143,7 @@ function compare(ref: ParsedReference, work: CandidateWork): Comparison {
     out.push(`卷号不符：你写的是第 ${ref.volume} 卷，记录是第 ${work.volume} 卷${where}`)
   } else if (ref.firstPage && work.firstPage && !sameNumber(ref.firstPage, work.firstPage)) {
     out.push(`页码不符：你写的起始页是 ${ref.firstPage}，记录是 ${work.firstPage}${where}`)
-  } else if (ref.volume && work.volume) {
+  } else if ((ref.volume && work.volume) || (ref.firstPage && work.firstPage)) {
     confirmed.push('卷期页码')
   }
 
@@ -198,6 +198,10 @@ function judge(ref: ParsedReference, top: { work: CandidateWork; sim: number }, 
       return result(ref, 'mismatch', `找到了标题一致的记录，但${conflicts.join('；')}。`, work, sim)
     }
     const checked = [...(viaDoi ? ['DOI'] : []), '标题', ...confirmed]
+    const unsure = doubtsAbout(ref, work)
+    if (unsure) {
+      return result(ref, 'manual', `找到了标题一致的记录，但${unsure}，不能确认出处一致。请点开记录核对。`, work, sim)
+    }
     if (!viaDoi && !confirmed.includes('作者')) {
       return result(
         ref,
@@ -211,6 +215,14 @@ function judge(ref: ParsedReference, top: { work: CandidateWork; sim: number }, 
   }
   const extra = conflicts.length > 0 ? `另外，${conflicts.join('；')}。` : ''
   return result(ref, 'mismatch', `只找到标题相近、但不完全一致的记录，请核对标题是否写错。${extra}`, work, sim)
+}
+
+/** 条目里写了却没读懂的部分，导致没法和记录比对。没比对过的不算一致 */
+function doubtsAbout(ref: ParsedReference, work: CandidateWork): string | null {
+  const why: string[] = []
+  if (ref.doubts?.includes('volumePage') && (work.volume || work.firstPage)) why.push('条目里卷、期、页码的写法没读懂，没能和记录比对')
+  if (ref.doubts?.includes('titleEnd')) why.push('题名后面还有一段文字，拿不准题名到哪里结束')
+  return why.length ? why.join('；') : null
 }
 
 interface SearchOutcome {
@@ -263,6 +275,10 @@ function notFound(ref: ParsedReference, s: SearchOutcome, reason: string): Verif
       sim,
       bookSearchLinks(ref.title ?? ref.raw.slice(0, 80)),
     )
+  }
+  // 网页、没有 DOI 只有网址的条目：这两个库本来就不收，查不到说明不了什么
+  if ((!ref.docType || ref.docType === 'EB') && !ref.doi && /https?:\/\//.test(ref.raw) && !/arxiv/i.test(ref.raw)) {
+    return result(ref, 'manual', 'Crossref 和 OpenAlex 只收录学术出版物，不收网页。请打开条目里的网址核对。', near, sim)
   }
   return result(ref, 'not_found', reason, near, sim)
 }
